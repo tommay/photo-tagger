@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require "data_mapper"
+require "byebug"
 
 # If you want the logs displayed you have to do this before the call to setup
 DataMapper::Logger.new($stdout, :debug)
@@ -21,8 +22,7 @@ class Photo
   property :filedate, DateTime, required: true       # Date file was modified.
   property :created_at, DateTime, required: true # Date this row was updated.
 
-  has n, :phototags
-  has n, :tags, through: :phototags
+  has n, :tags, through: Resource
 end
 
 class Tag
@@ -31,15 +31,7 @@ class Tag
   property :id, Serial          # An auto-increment integer key
   property :tag, String, length: 100, required: true, unique: true
 
-  has n, :phototags
-  has n, :photos, through: :phototags
-end
-
-class Phototag
-  include DataMapper::Resource
-
-  belongs_to :photo, key: true
-  belongs_to :tag, key: true
+  has n, :photos, through: Resource
 end
 
 DataMapper.finalize
