@@ -52,6 +52,19 @@ class Tag
   property :tag, String, length: 100, required: true, unique: true
 
   has n, :photos, through: Resource
+
+  def self.find_or_create(string)
+    tag = first(tag: string)
+    if !tag
+      tag = Tag.create(tag: string)
+      tag.save
+    end
+    tag
+  end
+
+  def self.for_directory(directory)
+    Photo.all(directory: directory).tags
+  end
 end
 
 DataMapper.finalize
