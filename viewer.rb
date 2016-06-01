@@ -42,7 +42,9 @@ class Viewer
 
     @image = builder["image"]
     @tag_entry = builder["tag_entry"]
+    @applied_tags_list = builder["applied_tags_list"]
     @applied_tags = builder["applied_tags"]
+    @available_tags_list = builder["available_tags_list"]
     @available_tags = builder["available_tags"]
 
     @tag_entry.signal_connect("activate") do |widget|
@@ -51,6 +53,11 @@ class Viewer
       if tag != ""
         add_tag(tag)
       end
+    end
+
+    @applied_tags.signal_connect("row-activated") do |widget, path, column|
+      tag = widget.model.get_iter(path)[0]
+      remove_tag(tag)
     end
 
     window = builder.get_object("the_window")
@@ -122,10 +129,17 @@ class Viewer
     end
   end
 
+  def remove_tag(string)
+    tag = @photo.tags.first(tag: string)
+    @photo.tags.delete(tag)
+    @photo.save
+    load_applied_tags
+  end
+
   def load_applied_tags
-    @applied_tags.clear
+    @applied_tags_list.clear
     @photo.tags.each do |tag|
-      @applied_tags.append[0] = tag.tag
+      @applied_tags_list.append[0] = tag.tag
     end
   end
 end

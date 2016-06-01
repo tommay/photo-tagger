@@ -2,7 +2,7 @@
 <!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
-  <object class="GtkListStore" id="applied_tags">
+  <object class="GtkListStore" id="applied_tags_list">
     <columns>
       <!-- column-name tag -->
       <column type="gchararray"/>
@@ -16,7 +16,7 @@
       </row>
     </data>
   </object>
-  <object class="GtkListStore" id="available_tags">
+  <object class="GtkListStore" id="available_tags_list">
     <columns>
       <!-- column-name tag -->
       <column type="gchararray"/>
@@ -39,10 +39,10 @@
             <property name="orientation">vertical</property>
             <property name="wide_handle">True</property>
             <child>
-              <object class="GtkTreeView">
+              <object class="GtkTreeView" id="applied_tags">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="model">applied_tags</property>
+                <property name="model">applied_tags_list</property>
                 <property name="headers_clickable">False</property>
                 <property name="search_column">0</property>
                 <child internal-child="selection">
@@ -82,10 +82,10 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkTreeView">
+                  <object class="GtkTreeView" id="available_tags">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="model">available_tags</property>
+                    <property name="model">available_tags_list</property>
                     <property name="search_column">0</property>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection"/>
