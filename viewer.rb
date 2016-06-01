@@ -96,5 +96,5 @@ class Viewer
   end
 end
 
-Viewer.new(ARGV[0])
+Viewer.new(ARGV[0] || ".")
 Gtk.main
