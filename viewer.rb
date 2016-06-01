@@ -60,6 +60,11 @@ class Viewer
       remove_tag(tag)
     end
 
+    @available_tags.signal_connect("row-activated") do |widget, path, column|
+      tag = widget.model.get_iter(path)[0]
+      add_tag(tag)
+    end
+
     load_available_tags
 
     window = builder.get_object("the_window")
@@ -123,7 +128,16 @@ class Viewer
   end
 
   def add_tag(string)
-    @photo.tags.first_or_create(tag: string)
+    # XXX I think this is supposed to work, but it only works if the tag
+    # doesn't exist in which case it creates the tag and links it, else
+    # it does nothing.
+    # @photo.tags.first_or_create(tag: string)
+    # So do it the hard way.
+    tag = Tag.first_or_create(tag: string)
+    if !@photo.tags.include?(tag)
+      @photo.tags << tag
+      @photo.save
+    end
     load_applied_tags
   end
 
