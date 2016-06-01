@@ -7,6 +7,14 @@
       <!-- column-name tag -->
       <column type="gchararray"/>
     </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">sample</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">sardonic</col>
+      </row>
+    </data>
   </object>
   <object class="GtkListStore" id="available_tags">
     <columns>
@@ -31,42 +39,25 @@
             <property name="orientation">vertical</property>
             <property name="wide_handle">True</property>
             <child>
-              <object class="GtkBox">
+              <object class="GtkTreeView">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="orientation">vertical</property>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Applied tags</property>
-                    <property name="single_line_mode">True</property>
-                    <property name="xalign">0</property>
-                    <attributes>
-                      <attribute name="gravity" value="west"/>
-                    </attributes>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
+                <property name="can_focus">True</property>
+                <property name="model">applied_tags</property>
+                <property name="headers_clickable">False</property>
+                <property name="search_column">0</property>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection"/>
                 </child>
                 <child>
-                  <object class="GtkTreeView">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="model">applied_tags</property>
-                    <property name="search_column">0</property>
-                    <child internal-child="selection">
-                      <object class="GtkTreeSelection"/>
+                  <object class="GtkTreeViewColumn">
+                    <property name="title" translatable="yes">Applied tags</property>
+                    <child>
+                      <object class="GtkCellRendererText"/>
+                      <attributes>
+                        <attribute name="text">0</attribute>
+                      </attributes>
                     </child>
                   </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
                 </child>
               </object>
               <packing>
@@ -80,12 +71,9 @@
                 <property name="can_focus">False</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkLabel">
+                  <object class="GtkEntry" id="tag_entry">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Available tags</property>
-                    <property name="justify">right</property>
-                    <property name="xalign">0</property>
+                    <property name="can_focus">True</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -97,12 +85,19 @@
                   <object class="GtkTreeView">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
+                    <property name="model">available_tags</property>
+                    <property name="search_column">0</property>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection"/>
                     </child>
+                    <child>
+                      <object class="GtkTreeViewColumn">
+                        <property name="title" translatable="yes">Available tags</property>
+                      </object>
+                    </child>
                   </object>
                   <packing>
-                    <property name="expand">False</property>
+                    <property name="expand">True</property>
                     <property name="fill">True</property>
                     <property name="position">1</property>
                   </packing>
@@ -115,7 +110,7 @@
             </child>
           </object>
           <packing>
-            <property name="expand">False</property>
+            <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">0</property>
           </packing>

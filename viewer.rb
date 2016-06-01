@@ -41,6 +41,17 @@ class Viewer
     builder.add_from_file("viewer.ui")
 
     @image = builder["image"]
+    @tag_entry = builder["tag_entry"]
+    @applied_tags = builder["applied_tags"]
+    @available_tags = builder["available_tags"]
+
+    @tag_entry.signal_connect("activate") do |widget|
+      tag = widget.text.strip
+      widget.set_text("")
+      if tag != ""
+        add_tag(tag)
+      end
+    end
 
     window = builder.get_object("the_window")
 
@@ -63,6 +74,7 @@ class Viewer
 
   def load_photo(filename)
     @photo = filename && Photo.find_or_create(filename)
+    load_applied_tags
     show_filename
     show_image
   end
@@ -98,6 +110,22 @@ class Viewer
       @image.set_pixbuf(scaled)
     else
       @image.set_pixbuf(nil)
+    end
+  end
+
+  def add_tag(string)
+    tag = Tag.find_or_create(string)
+    if !@photo.tags.include?(tag)
+      @photo.tags << tag
+      @photo.save
+      load_applied_tags
+    end
+  end
+
+  def load_applied_tags
+    @applied_tags.clear
+    @photo.tags.each do |tag|
+      @applied_tags.append[0] = tag.tag
     end
   end
 end
