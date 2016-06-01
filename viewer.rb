@@ -22,8 +22,7 @@ class Viewer
 
     init_ui
 
-    show_filename
-    show_image
+    set_file(@filenames[@nfile])
   end
 
   def filter_by_suffix(filenames)
@@ -59,28 +58,28 @@ class Viewer
     window.show_all
   end
 
-  def xnext(delta)
-    if @filenames.size > 0
-      @nfile = (@nfile + delta) % @filenames.size
-    end
+  def set_file(filename)
+    @filename = filename
     show_filename
     show_image
   end
 
-  def current_filename
-    @filenames[@nfile]
+  def xnext(delta)
+    if @filenames.size > 0
+      @nfile = (@nfile + delta) % @filenames.size
+    end
+    set_file(@filenames[@nfile])
   end
 
   def show_filename
     if @filename_label
-      @filename_label.set_text(current_filename || "")
+      @filename_label.set_text(@filename)
     end
   end
 
   def show_image
-    filename = current_filename
-    if filename
-      pixbuf = Gdk::Pixbuf.new(file: filename)
+    if @filename
+      pixbuf = Gdk::Pixbuf.new(file: @filename)
       image_width = @image.allocated_width
       image_height = @image.allocated_height
       pixbuf_width = pixbuf.width
