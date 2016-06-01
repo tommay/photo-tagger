@@ -48,9 +48,9 @@ class Viewer
       # Gdk::Keyval.to_name(event.keyval)
       case event.keyval
       when Gdk::Keyval::KEY_Left
-        xnext(-1)
+        prev_photo
       when Gdk::Keyval::KEY_Right
-        xnext(1)
+        next_photo
       end
     end
 
@@ -67,11 +67,15 @@ class Viewer
     show_image
   end
 
-  def xnext(delta)
+  def next_photo(delta = 1)
     if @filenames.size > 0
       @nfile = (@nfile + delta) % @filenames.size
     end
     load_photo(@filenames[@nfile])
+  end
+
+  def prev_photo
+    next_photo(-1)
   end
 
   def show_filename
