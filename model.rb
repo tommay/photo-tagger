@@ -53,15 +53,6 @@ class Tag
 
   has n, :photos, through: Resource
 
-  def self.find_or_create(string)
-    tag = first(tag: string)
-    if !tag
-      tag = Tag.create(tag: string)
-      tag.save
-    end
-    tag
-  end
-
   def self.for_directory(directory)
     Photo.all(directory: directory).tags
   end

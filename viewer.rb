@@ -121,12 +121,8 @@ class Viewer
   end
 
   def add_tag(string)
-    tag = Tag.find_or_create(string)
-    if !@photo.tags.include?(tag)
-      @photo.tags << tag
-      @photo.save
-      load_applied_tags
-    end
+    @photo.tags.first_or_create(tag: string)
+    load_applied_tags
   end
 
   def remove_tag(string)
