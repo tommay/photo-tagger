@@ -1,7 +1,10 @@
 #!/usr/bin/env ruby
 
+require "bundler/setup"
 require "gtk3"
 require "byebug"
+
+require_relative "model"
 
 class Viewer
   SUFFIXES = [%r{.jpg$}i, %r{.png$}i]
