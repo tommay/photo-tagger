@@ -60,6 +60,8 @@ class Viewer
       remove_tag(tag)
     end
 
+    load_available_tags
+
     window = builder.get_object("the_window")
 
     window.signal_connect("key_press_event") do |widget, event|
@@ -136,6 +138,13 @@ class Viewer
     @applied_tags_list.clear
     @photo.tags.each do |tag|
       @applied_tags_list.append[0] = tag.tag
+    end
+  end
+
+  def load_available_tags
+    @available_tags_list.clear
+    Tag.all.each do |tag|
+      @available_tags_list.append[0] = tag.tag
     end
   end
 end
