@@ -51,6 +51,11 @@ class Viewer
       column = Gtk::TreeViewColumn.new("Applied tags", renderer).with do
         # Get text from column 0 of the model:
         add_attribute(renderer, "text", 0)
+        # Use a block to set/unset dynamically computed properties on
+        # the renderer:
+        # set_cell_data_func(renderer) do |tree_view_column, renderer, model, iter|
+        #  renderer.set_text("wow")
+        # end
       end
       append_column(column)
     end
@@ -94,18 +99,29 @@ class Viewer
     scrolled = Gtk::ScrolledWindow.new.with do
       set_hscrollbar_policy(:never)
       set_vscrollbar_policy(:automatic)
+      #set_shadow_type(:etched_out)
     end
     scrolled.add(@available_tags)
 
     box = Gtk::Box.new(:vertical)
     box.pack_start(@tag_entry, expand: false)
-    box.pack_start(scrolled, expand: true)
+    box.pack_start(scrolled, expand: true, fill: true)
     paned.pack2(box, resize: true, shrink: false)
     #paned.position = ??
 
     box = Gtk::Box.new(:horizontal)
     box.pack_start(paned, expand: false)
-    box.pack_start(@image, expand: true)
+
+    # Put @image into an event box so it can get mouse clicks and
+    # drags.
+
+    @image.set_size_request(400, 400)
+    event_box = Gtk::EventBox.new
+    event_box.add(@image)
+    box.pack_start(event_box, expand: true, fill: true)
+#    event_box.signal_connect("button_press_event") do
+#      puts "Clicked."
+#    end
 
     # Finally, the top-level window.
 
