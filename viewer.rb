@@ -75,7 +75,24 @@ class Viewer
       append_column(column)
     end
 
-    @tag_entry = Gtk::Entry.new
+    @tag_entry = Gtk::Entry.new.tap do |o|
+      @tag_completion = Gtk::EntryCompletion.new.tap do |o|
+        o.model = @available_tags_list
+        o.text_column = 0
+        o.inline_completion = true
+        o.popup_completion = true
+        o.popup_single_match = false
+      end
+      o.completion = @tag_completion
+    end
+
+    # XXX what I want is to click on a completion in the popup to set the tag,
+    # but iter isn't working here.
+
+    #@tag_completion.signal_connect("match-selected") do |widget, model, iter|
+    #  puts "Got #{iter[0]}"
+    #  false
+    #end
 
     @image = Gtk::Image.new
 
