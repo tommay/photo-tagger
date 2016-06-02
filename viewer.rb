@@ -42,8 +42,8 @@ class Viewer
 
     @applied_tags_list = Gtk::ListStore.new(String)
     @applied_tags = Gtk::TreeView.new(@applied_tags_list).with do
-      headers_visible = true
-      selection.mode = Gtk::SelectionMode::NONE
+      set_headers_visible(true)
+      selection.set_mode(Gtk::SelectionMode::NONE)
       renderer = Gtk::CellRendererText.new
       # Fixed text property:
       # renderer.set_text("blah")
@@ -57,8 +57,8 @@ class Viewer
 
     @available_tags_list = Gtk::ListStore.new(String)
     @available_tags = Gtk::TreeView.new(@available_tags_list).with do
-      headers_visible = true
-      selection.mode = Gtk::SelectionMode::NONE
+      set_headers_visible(true)
+      selection.set_mode(Gtk::SelectionMode::NONE)
       renderer = Gtk::CellRendererText.new
       # Fixed text property:
       # renderer.set_text("blah")
@@ -92,8 +92,8 @@ class Viewer
     paned.pack1(scrolled, resize: true, shrink: false)
 
     scrolled = Gtk::ScrolledWindow.new.with do
-      hscrollbar_policy = :never
-      vscrollbar_policy = :automatic
+      set_hscrollbar_policy(:never)
+      set_vscrollbar_policy(:automatic)
     end
     scrolled.add(@available_tags)
 
@@ -113,7 +113,7 @@ class Viewer
       set_title("Viewer")
       # override_background_color(:normal, Gdk::RGBA::new(0.2, 0.2, 0.2, 1))
       set_default_size(300, 280)
-      position = :center
+      set_position(:center)
     end
     window.add(box)
 
