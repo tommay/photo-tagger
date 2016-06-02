@@ -109,6 +109,8 @@ class Viewer
     scrolled = Gtk::ScrolledWindow.new.with do
       set_hscrollbar_policy(:never)
       set_vscrollbar_policy(:automatic)
+      # I want the scrollbars on whenever the window has enough content.
+      set_overlay_scrolling(false)
     end
     scrolled.add(@applied_tags)
     paned.pack1(scrolled, resize: true, shrink: false)
@@ -116,6 +118,7 @@ class Viewer
     scrolled = Gtk::ScrolledWindow.new.with do
       set_hscrollbar_policy(:never)
       set_vscrollbar_policy(:automatic)
+      set_overlay_scrolling(false)
       #set_shadow_type(:etched_out)
     end
     scrolled.add(@available_tags)
