@@ -62,6 +62,7 @@ class Viewer
 
     @available_tags_list = Gtk::ListStore.new(String)
     @available_tags = Gtk::TreeView.new(@available_tags_list).with do
+      set_headers_visible(false)
       set_enable_search(false)
       selection.set_mode(Gtk::SelectionMode::NONE)
       renderer = Gtk::CellRendererText.new
@@ -115,6 +116,12 @@ class Viewer
     scrolled.add(@applied_tags)
     paned.pack1(scrolled, resize: true, shrink: false)
 
+    # Make the available tags treeviews scrollable, and put them in a notebook
+    # with a page for each type (all, directory, etc.).
+
+    notebook = Gtk::Notebook.new.tap do |o|
+    end
+
     scrolled = Gtk::ScrolledWindow.new.with do
       set_hscrollbar_policy(:never)
       set_vscrollbar_policy(:automatic)
@@ -123,9 +130,16 @@ class Viewer
     end
     scrolled.add(@available_tags)
 
+    label = Gtk::Label.new("All")
+    notebook.append_page(scrolled, label)
+
+    tbd = Gtk::Label.new("Tbd")
+    label = Gtk::Label.new("TBD")
+    notebook.append_page(tbd, label)
+
     box = Gtk::Box.new(:vertical)
     box.pack_start(@tag_entry, expand: false)
-    box.pack_start(scrolled, expand: true, fill: true)
+    box.pack_start(notebook, expand: true, fill: true)
     paned.pack2(box, resize: true, shrink: false)
     #paned.position = ??
 
