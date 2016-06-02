@@ -36,12 +36,12 @@ class Viewer
     end
   end
 
-  def init_ui
-    # Create the widgets we actually care about and save in instance
-    # variables and use.  Then lay them out.
-
-    @applied_tags_list = Gtk::ListStore.new(String)
-    @applied_tags = Gtk::TreeView.new(@applied_tags_list).tap do |o|
+  # The tag TreeViews are all nearly the same, so create them here.
+  #
+  def create_treeview(name)
+    tags_list = Gtk::ListStore.new(String)
+    tags_view = Gtk::TreeView.new(tags_list).tap do |o|
+      o.headers_visible = false
       o.enable_search = false
       o.selection.mode = Gtk::SelectionMode::NONE
       renderer = Gtk::CellRendererText.new
@@ -59,32 +59,18 @@ class Viewer
       end
       o.append_column(column)
     end
+    [tags_list, tags_view]
+  end
 
-    @available_tags_list = Gtk::ListStore.new(String)
-    @available_tags = Gtk::TreeView.new(@available_tags_list).tap do |o|
-      o.headers_visible = false
-      o.enable_search = false
-      o.selection.mode = Gtk::SelectionMode::NONE
-      renderer = Gtk::CellRendererText.new
-      column = Gtk::TreeViewColumn.new("Available tags", renderer).tap do |o|
-        # Get text from column 0 of the model:
-        o.add_attribute(renderer, "text", 0)
-      end
-      o.append_column(column)
-    end
+  def init_ui
+    # Create the widgets we actually care about and save in instance
+    # variables and use.  Then lay them out.
 
-    @directory_tags_list = Gtk::ListStore.new(String)
-    @directory_tags = Gtk::TreeView.new(@directory_tags_list).tap do |o|
-      o.headers_visible = false
-      o.enable_search = false
-      o.selection.mode = Gtk::SelectionMode::NONE
-      renderer = Gtk::CellRendererText.new
-      column = Gtk::TreeViewColumn.new("Directory tags", renderer).tap do |o|
-        # Get text from column 0 of the model:
-        o.add_attribute(renderer, "text", 0)
-      end
-      o.append_column(column)
-    end
+    @applied_tags_list, @applied_tags = create_treeview("Applied tags")
+    @applied_tags.headers_visible = true
+
+    @available_tags_list, @available_tags = create_treeview("Available tags")
+    @directory_tags_list, @directory_tags = create_treeview("Directory tags")
 
     @tag_entry = Gtk::Entry.new.tap do |o|
       @tag_completion = Gtk::EntryCompletion.new.tap do |o|
