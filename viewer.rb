@@ -73,6 +73,19 @@ class Viewer
       o.append_column(column)
     end
 
+    @directory_tags_list = Gtk::ListStore.new(String)
+    @directory_tags = Gtk::TreeView.new(@directory_tags_list).tap do |o|
+      o.headers_visible = false
+      o.enable_search = false
+      o.selection.mode = Gtk::SelectionMode::NONE
+      renderer = Gtk::CellRendererText.new
+      column = Gtk::TreeViewColumn.new("Directory tags", renderer).tap do |o|
+        # Get text from column 0 of the model:
+        o.add_attribute(renderer, "text", 0)
+      end
+      o.append_column(column)
+    end
+
     @tag_entry = Gtk::Entry.new.tap do |o|
       @tag_completion = Gtk::EntryCompletion.new.tap do |o|
         o.model = @available_tags_list
@@ -117,22 +130,24 @@ class Viewer
     # with a page for each type (all, directory, etc.).
 
     notebook = Gtk::Notebook.new.tap do |o|
+      # Allow scrolling if there are too many tabs.
+      o.scrollable = true
     end
 
-    scrolled = Gtk::ScrolledWindow.new.tap do |o|
-      o.hscrollbar_policy = :never
-      o.vscrollbar_policy = :automatic
-      o.overlay_scrolling = false
-      #o.shadow_type(:etched_out)
+    [["Dir", @directory_tags], ["All", @available_tags]].each do |name, treeview|
+      scrolled = Gtk::ScrolledWindow.new.tap do |o|
+        o.hscrollbar_policy = :never
+        o.vscrollbar_policy = :automatic
+        o.overlay_scrolling = false
+        #o.shadow_type(:etched_out)
+      end
+      scrolled.add(treeview)
+
+      label = Gtk::Label.new(name)
+      notebook.append_page(scrolled, label)
     end
-    scrolled.add(@available_tags)
 
-    label = Gtk::Label.new("All")
-    notebook.append_page(scrolled, label)
-
-    tbd = Gtk::Label.new("Tbd")
-    label = Gtk::Label.new("TBD")
-    notebook.append_page(tbd, label)
+    # Box up @tag_entry and notebook.
 
     box = Gtk::Box.new(:vertical)
     box.pack_start(@tag_entry, expand: false)
@@ -205,6 +220,7 @@ class Viewer
   def load_photo(filename)
     @photo = filename && Photo.find_or_create(filename)
     load_applied_tags
+    load_directory_tags
     show_filename
     show_image
   end
@@ -255,6 +271,7 @@ class Viewer
       @photo.save
       load_applied_tags
       load_available_tags
+      load_directory_tags
     end
   end
 
@@ -263,6 +280,7 @@ class Viewer
     @photo.tags.delete(tag)
     @photo.save
     load_applied_tags
+    load_directory_tags
   end
 
   def load_applied_tags
@@ -276,6 +294,15 @@ class Viewer
     @available_tags_list.clear
     Tag.all.each do |tag|
       @available_tags_list.append[0] = tag.tag
+    end
+  end
+
+  def load_directory_tags
+    @directory_tags_list.clear
+    if @photo
+      Photo.all(directory: @photo.directory).tags.each do |tag|
+        @directory_tags_list.append[0] = tag.tag
+      end
     end
   end
 end
