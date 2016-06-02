@@ -41,39 +41,36 @@ class Viewer
     # variables and use.  Then lay them out.
 
     @applied_tags_list = Gtk::ListStore.new(String)
-    @applied_tags = Gtk::TreeView.new(@applied_tags_list).with do
-      set_enable_search(false)
-      selection.set_mode(Gtk::SelectionMode::NONE)
+    @applied_tags = Gtk::TreeView.new(@applied_tags_list).tap do |o|
+      o.enable_search = false
+      o.selection.mode = Gtk::SelectionMode::NONE
       renderer = Gtk::CellRendererText.new
       # Fixed text property:
       # renderer.set_text("blah")
       # renderer.set_property("text", "blah")
-      column = Gtk::TreeViewColumn.new("Applied tags", renderer).with do
+      column = Gtk::TreeViewColumn.new("Applied tags", renderer).tap do |o|
         # Get text from column 0 of the model:
-        add_attribute(renderer, "text", 0)
+        o.add_attribute(renderer, "text", 0)
         # Use a block to set/unset dynamically computed properties on
         # the renderer:
-        # set_cell_data_func(renderer) do |tree_view_column, renderer, model, iter|
+        # o.set_cell_data_func(renderer) do |tree_view_column, renderer, model, iter|
         #  renderer.set_text("wow")
-        # end
+        #  end
       end
-      append_column(column)
+      o.append_column(column)
     end
 
     @available_tags_list = Gtk::ListStore.new(String)
-    @available_tags = Gtk::TreeView.new(@available_tags_list).with do
-      set_headers_visible(false)
-      set_enable_search(false)
-      selection.set_mode(Gtk::SelectionMode::NONE)
+    @available_tags = Gtk::TreeView.new(@available_tags_list).tap do |o|
+      o.headers_visible = false
+      o.enable_search = false
+      o.selection.mode = Gtk::SelectionMode::NONE
       renderer = Gtk::CellRendererText.new
-      # Fixed text property:
-      # renderer.set_text("blah")
-      # renderer.set_property("text", "blah")
-      column = Gtk::TreeViewColumn.new("Available tags", renderer).with do
+      column = Gtk::TreeViewColumn.new("Available tags", renderer).tap do |o|
         # Get text from column 0 of the model:
-        add_attribute(renderer, "text", 0)
+        o.add_attribute(renderer, "text", 0)
       end
-      append_column(column)
+      o.append_column(column)
     end
 
     @tag_entry = Gtk::Entry.new.tap do |o|
@@ -107,11 +104,11 @@ class Viewer
 
     paned = Gtk::Paned.new(:vertical)
 
-    scrolled = Gtk::ScrolledWindow.new.with do
-      set_hscrollbar_policy(:never)
-      set_vscrollbar_policy(:automatic)
+    scrolled = Gtk::ScrolledWindow.new.tap do |o|
+      o.hscrollbar_policy = :never
+      o.vscrollbar_policy = :automatic
       # I want the scrollbars on whenever the window has enough content.
-      set_overlay_scrolling(false)
+      o.overlay_scrolling = false
     end
     scrolled.add(@applied_tags)
     paned.pack1(scrolled, resize: true, shrink: false)
@@ -122,11 +119,11 @@ class Viewer
     notebook = Gtk::Notebook.new.tap do |o|
     end
 
-    scrolled = Gtk::ScrolledWindow.new.with do
-      set_hscrollbar_policy(:never)
-      set_vscrollbar_policy(:automatic)
-      set_overlay_scrolling(false)
-      #set_shadow_type(:etched_out)
+    scrolled = Gtk::ScrolledWindow.new.tap do |o|
+      o.hscrollbar_policy = :never
+      o.vscrollbar_policy = :automatic
+      o.overlay_scrolling = false
+      #o.shadow_type(:etched_out)
     end
     scrolled.add(@available_tags)
 
@@ -159,11 +156,11 @@ class Viewer
 
     # Finally, the top-level window.
 
-    window = Gtk::Window.new.with do
-      set_title("Viewer")
-      # override_background_color(:normal, Gdk::RGBA::new(0.2, 0.2, 0.2, 1))
-      set_default_size(300, 280)
-      set_position(:center)
+    window = Gtk::Window.new.tap do |o|
+      o.title = "Viewer"
+      # o.override_background_color(:normal, Gdk::RGBA::new(0.2, 0.2, 0.2, 1))
+      o.set_default_size(300, 280)
+      o.position = :center
     end
     window.add(box)
 
@@ -280,13 +277,6 @@ class Viewer
     Tag.all.each do |tag|
       @available_tags_list.append[0] = tag.tag
     end
-  end
-end
-
-class Object
-  def with(&block)
-    instance_exec(&block)
-    self
   end
 end
 
