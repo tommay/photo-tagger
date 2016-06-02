@@ -73,6 +73,9 @@ class Viewer
     @directory_tags_list, @directory_tags = create_treeview("Directory tags")
 
     @tag_entry = Gtk::Entry.new.tap do |o|
+      # The completion list intentionally uses all tags, instead of
+      # using the list selected in the notebook tab.  This seems more
+      # useful.  Time will tell.
       @tag_completion = Gtk::EntryCompletion.new.tap do |o|
         o.model = @available_tags_list
         o.text_column = 0
@@ -179,6 +182,11 @@ class Viewer
     end
 
     @available_tags.signal_connect("row-activated") do |widget, path, column|
+      tag = widget.model.get_iter(path)[0]
+      add_tag(tag)
+    end
+
+    @directory_tags.signal_connect("row-activated") do |widget, path, column|
       tag = widget.model.get_iter(path)[0]
       add_tag(tag)
     end
