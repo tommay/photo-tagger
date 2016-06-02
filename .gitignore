@@ -1,2 +1,3 @@
-viewer.db
-*~
+.bundle
+.byebug_history
+*.db
