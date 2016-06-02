@@ -221,8 +221,9 @@ class Viewer
     if !@photo.tags.include?(tag)
       @photo.tags << tag
       @photo.save
+      load_applied_tags
+      load_available_tags
     end
-    load_applied_tags
   end
 
   def remove_tag(string)
