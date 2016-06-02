@@ -37,15 +37,85 @@ class Viewer
   end
 
   def init_ui
-    builder = Gtk::Builder.new
-    builder.add_from_file("viewer.ui")
+    # Create the widgets we actually care about and save in instance
+    # variables and use.  Then lay them out.
 
-    @image = builder["image"]
-    @tag_entry = builder["tag_entry"]
-    @applied_tags_list = builder["applied_tags_list"]
-    @applied_tags = builder["applied_tags"]
-    @available_tags_list = builder["available_tags_list"]
-    @available_tags = builder["available_tags"]
+    @applied_tags_list = Gtk::ListStore.new(String)
+    @applied_tags = Gtk::TreeView.new(@applied_tags_list).with do
+      headers_visible = true
+      selection.mode = Gtk::SelectionMode::NONE
+      renderer = Gtk::CellRendererText.new
+      # Fixed text property:
+      # renderer.set_text("blah")
+      # renderer.set_property("text", "blah")
+      column = Gtk::TreeViewColumn.new("Applied tags", renderer).with do
+        # Get text from column 0 of the model:
+        add_attribute(renderer, "text", 0)
+      end
+      append_column(column)
+    end
+
+    @available_tags_list = Gtk::ListStore.new(String)
+    @available_tags = Gtk::TreeView.new(@available_tags_list).with do
+      headers_visible = true
+      selection.mode = Gtk::SelectionMode::NONE
+      renderer = Gtk::CellRendererText.new
+      # Fixed text property:
+      # renderer.set_text("blah")
+      # renderer.set_property("text", "blah")
+      column = Gtk::TreeViewColumn.new("Available tags", renderer).with do
+        # Get text from column 0 of the model:
+        add_attribute(renderer, "text", 0)
+      end
+      append_column(column)
+    end
+
+    @tag_entry = Gtk::Entry.new
+
+    @image = Gtk::Image.new
+
+    # Widget layout.  The tag TreeViews get wrapped in ScrolledWindows
+    # and put into a Paned.  @tag_entry goes into a Box with
+    # @available_tags and the Box goes in the lower pane.
+
+    # "Often, it is useful to put each child inside a Gtk::Frame with
+    # the shadow type set to Gtk::SHADOW_IN so that the gutter appears
+    # as a ridge."
+
+    paned = Gtk::Paned.new(:vertical)
+
+    scrolled = Gtk::ScrolledWindow.new.with do
+      set_hscrollbar_policy(:never)
+      set_vscrollbar_policy(:automatic)
+    end
+    scrolled.add(@applied_tags)
+    paned.pack1(scrolled, resize: true, shrink: false)
+
+    scrolled = Gtk::ScrolledWindow.new.with do
+      hscrollbar_policy = :never
+      vscrollbar_policy = :automatic
+    end
+    scrolled.add(@available_tags)
+
+    box = Gtk::Box.new(:vertical)
+    box.pack_start(@tag_entry, expand: false)
+    box.pack_start(scrolled, expand: true)
+    paned.pack2(box, resize: true, shrink: false)
+    #paned.position = ??
+
+    box = Gtk::Box.new(:horizontal)
+    box.pack_start(paned, expand: false)
+    box.pack_start(@image, expand: true)
+
+    # Finally, the top-level window.
+
+    window = Gtk::Window.new.with do
+      set_title("Viewer")
+      # override_background_color(:normal, Gdk::RGBA::new(0.2, 0.2, 0.2, 1))
+      set_default_size(300, 280)
+      position = :center
+    end
+    window.add(box)
 
     @tag_entry.signal_connect("activate") do |widget|
       tag = widget.text.strip
@@ -66,8 +136,6 @@ class Viewer
     end
 
     load_available_tags
-
-    window = builder.get_object("the_window")
 
     window.signal_connect("key_press_event") do |widget, event|
       # Gdk::Keyval.to_name(event.keyval)
@@ -160,6 +228,13 @@ class Viewer
     Tag.all.each do |tag|
       @available_tags_list.append[0] = tag.tag
     end
+  end
+end
+
+class Object
+  def with(&block)
+    instance_exec(&block)
+    self
   end
 end
 
