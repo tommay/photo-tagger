@@ -3,12 +3,6 @@
 require "data_mapper"
 require "byebug"
 
-# If you want the logs displayed you have to do this before the call to setup
-DataMapper::Logger.new($stdout, :debug)
-
-# A Sqlite3 connection to a persistent database
-DataMapper.setup(:default, "sqlite:///home/tom/viewer/tags.db")
-
 # XXX Use Integer instead of DateTime?
 
 class Photo
@@ -56,3 +50,19 @@ class Tag
 end
 
 DataMapper.finalize
+
+db_file = "/home/tom/viewer/tags.db"
+
+# If you want the logs displayed you have to do this before the call to setup
+#
+DataMapper::Logger.new($stdout, :debug)
+
+# A Sqlite3 connection to a persistent database
+#
+DataMapper.setup(:default, "sqlite://#{db_file}")
+
+# Create the file+schema if it doesn't exist.
+#
+if !File.exist?(db_file)
+  DataMapper.auto_migrate!
+end
