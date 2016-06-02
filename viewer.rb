@@ -193,7 +193,6 @@ class Viewer
       when Gdk::Keyval::KEY_Right
         next_photo
       end
-      false
     end
 
     window.signal_connect("destroy") do
