@@ -34,6 +34,29 @@ class Photo
   def filename
     File.join(directory, basename)
   end
+
+  def add_tag(string)
+    # XXX I think this is supposed to work, but it only works if the tag
+    # doesn't exist in which case it creates the tag and links it, else
+    # it does nothing.
+    # self.tags.first_or_create(tag: string)
+    # So do it the hard way.
+    tag = Tag.first_or_create(tag: string)
+    if !self.tags.include?(tag)
+      self.tags << tag
+      self.save
+      true
+    end
+  end
+
+  def remove_tag(string)
+    tag = self.tags.first(tag: string)
+    if tag
+      self.tags.delete(tag)
+      self.save
+      true
+    end
+  end
 end
 
 class Tag

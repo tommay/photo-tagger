@@ -245,15 +245,7 @@ class Viewer
   end
 
   def add_tag(string)
-    # XXX I think this is supposed to work, but it only works if the tag
-    # doesn't exist in which case it creates the tag and links it, else
-    # it does nothing.
-    # @photo.tags.first_or_create(tag: string)
-    # So do it the hard way.
-    tag = Tag.first_or_create(tag: string)
-    if !@photo.tags.include?(tag)
-      @photo.tags << tag
-      @photo.save
+    if @photo.add_tag(string)
       load_applied_tags
       load_available_tags
       load_directory_tags
@@ -261,11 +253,10 @@ class Viewer
   end
 
   def remove_tag(string)
-    tag = @photo.tags.first(tag: string)
-    @photo.tags.delete(tag)
-    @photo.save
-    load_applied_tags
-    load_directory_tags
+    if @photo.remove_tag(string)
+      load_applied_tags
+      load_directory_tags
+    end
   end
 
   def load_applied_tags
