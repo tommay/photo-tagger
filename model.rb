@@ -10,7 +10,7 @@ DataMapper::Logger.new($stdout, :debug)
 #DataMapper.setup(:default, "sqlite::memory:")
 
 # A Sqlite3 connection to a persistent database
-DataMapper.setup(:default, "sqlite:///home/tom/viewer/viewer.db")
+DataMapper.setup(:default, "sqlite:///home/tom/viewer/tags.db")
 
 # XXX Use Integer instead of DateTime?
 
