@@ -42,7 +42,7 @@ class Viewer
 
     @applied_tags_list = Gtk::ListStore.new(String)
     @applied_tags = Gtk::TreeView.new(@applied_tags_list).with do
-      set_headers_visible(true)
+      set_enable_search(false)
       selection.set_mode(Gtk::SelectionMode::NONE)
       renderer = Gtk::CellRendererText.new
       # Fixed text property:
@@ -62,7 +62,7 @@ class Viewer
 
     @available_tags_list = Gtk::ListStore.new(String)
     @available_tags = Gtk::TreeView.new(@available_tags_list).with do
-      set_headers_visible(true)
+      set_enable_search(false)
       selection.set_mode(Gtk::SelectionMode::NONE)
       renderer = Gtk::CellRendererText.new
       # Fixed text property:
