@@ -17,9 +17,9 @@ class Photo
   has n, :tags, through: Resource
 
   def self.find_or_create(filename)
-    absolute = File.absolute_path(filename)
-    directory = File.dirname(absolute)
-    basename = File.basename(absolute)
+    realpath = Pathname.new(filename).realpath
+    directory = realpath.dirname.to_s
+    basename = realpath.basename.to_s
 
     photo = first(directory: directory, basename: basename)
     if !photo
@@ -74,7 +74,7 @@ end
 
 DataMapper.finalize
 
-db_file = "/home/tom/viewer/tags.db"
+db_file = "/home/tom/tagger/tags.db"
 
 # If you want the logs displayed you have to do this before the call to setup
 #

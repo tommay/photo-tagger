@@ -5,18 +5,22 @@ require "gtk3"
 require "byebug"
 
 require_relative "model"
+require_relative "files"
 
 class Viewer
-  SUFFIXES = [%r{.jpg$}i, %r{.png$}i]
-
   def initialize(filename)
     case
-    when File.directory?(filename)
-      @filenames = filter_by_suffix(Dir["#{filename}/*"])
+    when !filename || File.directory?(filename)
+      @filenames = Files.for_directory(filename)
       @nfile = 0
     when File.exist?(filename)
-      dirname = File.dirname(filename)
-      @filenames = filter_by_suffix(Dir["#{dirname}/*"])
+      dirname =
+        if filename =~ /#{Regexp.quote(File::SEPARATOR)}/
+          File.dirname(filename)
+        else
+          nil
+        end
+      @filenames = Files.for_directory(dirname)
       @nfile = @filenames.find_index(filename)
     else
       puts "#{filename} not found"
@@ -26,14 +30,6 @@ class Viewer
     init_ui
 
     load_photo(@filenames[@nfile])
-  end
-
-  def filter_by_suffix(filenames)
-    filenames.select do |filename|
-      SUFFIXES.any? do |suffix|
-        filename =~ suffix
-      end
-    end
   end
 
   # The tag TreeViews are all nearly the same, so create them here.
@@ -291,5 +287,7 @@ class Viewer
   end
 end
 
-Viewer.new(ARGV[0] || ".")
+# ARGV[0] might be nil, in which case we'll show the image files in
+# the current directory without "./" in their path.
+Viewer.new(ARGV[0])
 Gtk.main
