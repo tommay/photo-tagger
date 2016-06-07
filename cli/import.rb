@@ -6,11 +6,11 @@ require "byebug"
 require_relative "../model"
 require_relative "../files"
 
-# import [-r] .|*.xmp
-#   If there's a matching image file by name, then add it to the
-#   database if it's not there already.  Either add its tags to the
-#   database, or replace its tags.
+# import [-r] dir|*.jpg
+#   Add images to the database by filename if they don't already exit.
+#   Read xmp sidecar files and add the tags to the database.
 #   -r to recurse into directories.
+#   XXX might want a way to replace tags instead of add.
 
 opt_recurse = false
 
@@ -27,14 +27,13 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-def import(filename, recurse)
+def import(filename, recurse:, top:)
   case
-  when File.directory?(filename)
-    filenames = Dir[File.join(filename, "*.xmp")]
-    filenames.each do |filename|
-      import(filename, recurse)
+  when (top || recurse) && File.directory?(filename)
+    Dir[File.join(filename, "*")].each do |f|
+      import(f, recurse: recurse, top: false)
     end
-  when File.file?(filename)
+  when Files.image_file?(filename)
     import_from_file(filename)
   end
 end
@@ -42,23 +41,24 @@ end
 def import_from_file(filename)
   # Fetch or create a database entry.
 
-  image_filename = filename.sub(/\.xmp$/, "")
-  photo = Photo.find_or_create(image_filename)
+  photo = Photo.find_or_create(filename)
 
-  # Read and parse the xmp and extract the tags.  This appends tags
-  # without replacing the existing tags.
+  # If there's an xmp sidecar file, read it and extract the tags.
+  # XXX This appends tags without replacing the existing tags.
 
-  xmp = Nokogiri::XML(File.read(filename))
-  namespaces = {
-    "dc" => "http://purl.org/dc/elements/1.1/",
-    "rdf" => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-  }
-
-  xmp.css("dc|subject rdf|li", namespaces).each do |tag|
-    photo.add_tag(tag.text)
+  xmp_filename = "#{filename}.xmp"
+  if File.exist?(xmp_filename)
+    xmp = Nokogiri::XML(File.read("#{filename}.xmp"))
+    namespaces = {
+      "dc" => "http://purl.org/dc/elements/1.1/",
+      "rdf" => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    }
+    xmp.css("dc|subject rdf|li", namespaces).each do |tag|
+      photo.add_tag(tag.text)
+    end
   end
 end
 
 ARGV.each do |filename|
-  import(filename, opt_recurse)
+  import(filename, recurse: opt_recurse, top: true)
 end
