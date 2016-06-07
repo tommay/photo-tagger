@@ -14,14 +14,7 @@ class Viewer
       @filenames = Files.for_directory(filename)
       @nfile = 0
     when File.exist?(filename)
-      dirname =
-        if filename =~ /#{Regexp.quote(File::SEPARATOR)}/
-          File.dirname(filename)
-        else
-          nil
-        end
-      @filenames = Files.for_directory(dirname)
-      @nfile = @filenames.find_index(filename)
+      set_filename(filename)
     else
       puts "#{filename} not found"
       exit(1)
@@ -30,6 +23,15 @@ class Viewer
     init_ui
 
     load_photo(@filenames[@nfile])
+  end
+
+  def set_filename(filename)
+    # If filename is a directory set dirname to its directorey, else to nil.
+    if filename =~ /#{Regexp.quote(File::SEPARATOR)}/
+      dirname = File.dirname(filename)
+    end
+    @filenames = Files.for_directory(dirname)
+    @nfile = @filenames.find_index(filename)
   end
 
   # The tag TreeViews are all nearly the same, so create them here.
@@ -196,6 +198,16 @@ class Viewer
         prev_photo
       when Gdk::Keyval::KEY_Right
         next_photo
+      when Gdk::Keyval::KEY_s
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          save_state
+          true
+        end
+      when Gdk::Keyval::KEY_r
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          restore_state
+          true
+        end
       end
     end
 
@@ -282,6 +294,28 @@ class Viewer
     if @photo
       Photo.all(directory: @photo.directory).tags.each do |tag|
         @directory_tags_list.append[0] = tag.tag
+      end
+    end
+  end
+
+  def save_state
+    if @photo
+      state = State.first_or_create
+      state.photo_id = @photo.id
+      state.save
+    end
+  end
+
+  def restore_state
+    state = State.first
+    if state
+      photo = Photo.get(state.photo_id)
+      if photo
+        filename = photo.filename
+        if File.exist?(filename)
+          set_filename(filename)
+          load_photo(filename)
+        end
       end
     end
   end

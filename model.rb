@@ -82,6 +82,13 @@ class Tag
   end
 end
 
+class State
+  include DataMapper::Resource
+
+  property :id, Serial
+  property :photo_id, Integer, required: true
+end
+
 DataMapper.finalize
 
 db_file = "/home/tom/tagger/tags.db"
