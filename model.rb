@@ -91,6 +91,10 @@ end
 
 DataMapper.finalize
 
+# Throw exceptions instead of silently returning false.
+#
+DataMapper::Model.raise_on_save_failure = true
+
 db_file = "/home/tom/tagger/tags.db"
 
 # If you want the logs displayed you have to do this before the call to setup
