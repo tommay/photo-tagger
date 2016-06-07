@@ -5,6 +5,7 @@ require "optparse"
 require "byebug"
 require_relative "../model"
 require_relative "../files"
+require_relative "../xmp"
 
 # import [-r] dir|*.jpg
 #   Add images to the database by filename if they don't already exist.
@@ -66,13 +67,9 @@ def import_from_file(filename, options)
 
   xmp_filename = "#{filename}.xmp"
   if File.exist?(xmp_filename)
-    xmp = Nokogiri::XML(File.read("#{filename}.xmp"))
-    namespaces = {
-      "dc" => "http://purl.org/dc/elements/1.1/",
-      "rdf" => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-    }
-    xmp.css("dc|subject rdf|li", namespaces).each do |tag|
-      photo.add_tag(tag.text)
+    xmp = Xmp.new(File.read(xmp_filename))
+    xmp.get_tags.each do |tag|
+      photo.add_tag(tag)
     end
   end
 
