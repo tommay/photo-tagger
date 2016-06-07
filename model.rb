@@ -1,7 +1,10 @@
 #!/usr/bin/env ruby
 
 require "data_mapper"
+require "gtk3"
 require "pathname"
+require "digest"
+require "base64"
 require "byebug"
 
 # XXX Use Integer instead of DateTime?
@@ -12,6 +15,7 @@ class Photo
   property :id, Serial
   property :directory, String, length: 500, required: true, unique_index: :name
   property :basename, String, length: 500, required: true, unique_index: :name
+  property :sha1, String, length: 28, required: true, unique_index: :sha1
   property :filedate, DateTime, required: true # Date file was modified.
   property :created_at, DateTime, required: true # Date this row was updated.
 
@@ -25,7 +29,12 @@ class Photo
     photo = first(directory: directory, basename: basename)
     if !photo
       filedate = File.mtime(realpath)
+
+      pixbuf = Gdk::Pixbuf.new(file: filename)
+      sha1 = Base64.strict_encode64(Digest::SHA1.digest(pixbuf.pixels))
+
       photo = Photo.create(directory: directory, basename: basename,
+                           sha1: sha1,
                            filedate: filedate, created_at: Time.now)
       photo.save
     end
