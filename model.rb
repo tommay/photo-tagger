@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require "data_mapper"
+require "pathname"
 require "byebug"
 
 # XXX Use Integer instead of DateTime?
