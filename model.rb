@@ -61,6 +61,14 @@ class Photo
     File.join(directory, basename)
   end
 
+  def each_identical_to(photo)
+    Photo.all(sha1: photo.sha1).each do |identical|
+      if identical.id != photo.id
+        yield(identical)
+      end
+    end
+  end
+
   def add_tag(string)
     # XXX I think this is supposed to work, but it only works if the tag
     # doesn't exist in which case it creates the tag and links it, else
