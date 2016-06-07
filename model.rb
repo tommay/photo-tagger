@@ -24,7 +24,7 @@ class Photo
 
     photo = first(directory: directory, basename: basename)
     if !photo
-      filedate = File.mtime(absolute)
+      filedate = File.mtime(realpath)
       photo = Photo.create(directory: directory, basename: basename,
                            filedate: filedate, created_at: Time.now)
       photo.save
