@@ -21,6 +21,22 @@ class Photo
 
   has n, :tags, through: Resource
 
+  # XXX can this cascade automatically?  XXX This is craxy.  This
+  # isn't even called unless there are no constraints blocking the
+  # destroy, so photo_tags must be deleted manually ahead of time.
+  # before :destroy do
+  #   photo_tags.each(&:destroy)
+  # end
+  def destroy
+    # This is horrible.  Instead of cascade deleting the photo_tags, I
+    # have to delete them manually then reload otherwise dm thinks
+    # there are still photo_tags that will be left hanging.
+    # XXX DM isn't setting up the schema with foreign keys, WTF?
+    photo_tags.each(&:destroy)
+    reload
+    super
+  end
+
   def self.find_or_create(filename)
     realpath = Pathname.new(filename).realpath
     directory = realpath.dirname.to_s
