@@ -212,6 +212,7 @@ class Viewer
     end
 
     window.signal_connect("destroy") do
+      save_state
       Gtk.main_quit
     end
 
