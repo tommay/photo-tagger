@@ -43,7 +43,6 @@ end
 
 Photo.all(directory: directory).each do |photo|
   if opt_force || !File.exist?(photo.filename)
-    puts photo.filename
     photo.destroy
   end
 end
