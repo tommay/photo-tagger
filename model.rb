@@ -15,7 +15,7 @@ class Photo
   property :id, Serial
   property :directory, String, length: 500, required: true, unique_index: :name
   property :basename, String, length: 500, required: true, unique_index: :name
-  property :sha1, String, length: 28, required: true, unique_index: :sha1
+  property :sha1, String, length: 28, required: true, index: :sha1
   property :filedate, DateTime, required: true # Date file was modified.
   property :created_at, DateTime, required: true # Date this row was updated.
 
