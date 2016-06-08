@@ -2,7 +2,7 @@ require_relative "model"
 require_relative "xmp"
 
 module Importer
-  def self.import_from_file(filename, copy_tags:, purge_identical_images:)
+  def self.find_or_import_from_file(filename, copy_tags:, purge_identical_images:)
     # Fetch or create a database entry.
 
     photo = Photo.find_or_create(filename)
@@ -38,6 +38,8 @@ module Importer
         end
       end
     end
+
+    photo
   end
 end
 

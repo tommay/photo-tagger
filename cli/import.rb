@@ -43,7 +43,7 @@ def import(filename, options, top)
       import(f, options, false)
     end
   when Files.image_file?(filename)
-    Importer.import_from_file(filename, options)
+    Importer.find_or_import_from_file(filename, options)
   end
 end
 

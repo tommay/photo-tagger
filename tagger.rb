@@ -6,6 +6,7 @@ require "byebug"
 
 require_relative "model"
 require_relative "files"
+require_relative "importer"
 
 class Viewer
   def initialize(filename)
@@ -22,7 +23,7 @@ class Viewer
 
     init_ui
 
-    import_photo(@filenames[@nfile])
+    load_photo(@filenames[@nfile])
   end
 
   def set_filename(filename)
@@ -219,8 +220,10 @@ class Viewer
     window.show_all
   end
 
-  def import_photo(filename)
-    @photo = filename && Photo.find_or_create(filename)
+  def load_photo(filename)
+    @photo = filename &&
+             Importer.find_or_import_from_file(
+               filename, copy_tags: true, purge_identical_images: true)
     load_applied_tags
     load_directory_tags
     show_filename
@@ -231,7 +234,7 @@ class Viewer
     if @filenames.size > 0
       @nfile = (@nfile + delta) % @filenames.size
     end
-    import_photo(@filenames[@nfile])
+    load_photo(@filenames[@nfile])
   end
 
   def prev_photo
@@ -315,7 +318,7 @@ class Viewer
         filename = photo.filename
         if File.exist?(filename)
           set_filename(filename)
-          import_photo(filename)
+          load_photo(filename)
         end
       end
     end
