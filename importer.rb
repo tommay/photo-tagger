@@ -11,7 +11,7 @@ module Importer
     # XXX this should be the default.
 
     if copy_tags
-      photo.each_identical_to(photo) do |identical|
+      photo.identical.each do |identical|
         photo.tags += identical.tags
       end
     end
@@ -32,7 +32,7 @@ module Importer
     # If requested, purge identical images that no longer exist.
 
     if purge_identical_images
-      photo.each_identical_to(photo) do |identical|
+      photo.identical.each do |identical|
         if !File.exist?(identical.filename)
           identical.destroy
         end

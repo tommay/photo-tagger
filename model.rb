@@ -61,12 +61,8 @@ class Photo
     File.join(directory, basename)
   end
 
-  def each_identical_to(photo)
-    Photo.all(sha1: photo.sha1).each do |identical|
-      if identical.id != photo.id
-        yield(identical)
-      end
-    end
+  def identical
+    Photo.all(sha1: self.sha1).select{|x| x.id != self.id}
   end
 
   def add_tag(string)
