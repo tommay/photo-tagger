@@ -37,13 +37,8 @@ OptionParser.new do |opts|
 end.parse!
 
 def import(filename, options, top)
-  case
-  when (top || options[:recurse]) && File.directory?(filename)
-    Dir[File.join(filename, "*")].each do |f|
-      import(f, options, false)
-    end
-  when Files.image_file?(filename)
-    Importer.find_or_import_from_file(filename, options)
+  Files.image_files(filename, options[:recurse]).each do |file|
+    Importer.find_or_import_from_file(file, options)
   end
 end
 

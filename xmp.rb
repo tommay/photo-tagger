@@ -14,8 +14,8 @@ class Xmp
 </x:xmpmeta>
 EOF
 
-  def initialize(string=nil
-    @xmp = Nokogiri::XML(string) || MINIMAL
+  def initialize(string=MINIMAL)
+    @xmp = Nokogiri::XML(string)
   end
 
   def get_tags

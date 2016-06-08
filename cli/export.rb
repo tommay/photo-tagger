@@ -11,8 +11,14 @@ require_relative "../xmp"
 #   If there's a matching image file by name, then export its tags
 #   to an xmp sidecar file, adding to any existing tags (?).
 
+options = {}
+
 OptionParser.new do |opts|
   opts.banner = "Usage: $0 [options] [directory...]"
+
+  opts.on("-r", "Recurse directories") do
+    options[:recurse] = true
+  end
 
   opts.on("-h", "--help", "Print this help") do
     puts opts
@@ -20,14 +26,9 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-def export(filename, options, top)
-  case
-  when (top || options[:recurse]) && File.directory?(filename)
-    Dir[File.join(filename, "*")].each do |f|
-      export(f, options, false)
-    end
-  when Files.image_file?(filename)
-    export_to_sidecar(filename)
+def export(filename, options)
+  Files.image_files(filename, options[:recurse]).each do |file|
+    export_to_sidecar(file)
   end
 end
 
@@ -48,7 +49,7 @@ def export_to_sidecar(filename)
     begin
       Xmp.new(File.read(xmp_filename))
     rescue Errno::ENOENT
-      Xmp.minimal
+      Xmp.new
     end
 
   # Add the photo's tags.
@@ -67,5 +68,5 @@ def export_to_sidecar(filename)
 end
 
 ARGV.each do |filename|
-  export_to_sidecar(filename)
+  export(filename, options)
 end
