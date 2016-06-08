@@ -59,6 +59,15 @@ class Photo
     first_or_new(directory: directory, basename: basename)
   end
 
+  def self.find(filename)
+    photo = find_or_new(filename)
+    if !photo.new?
+      photo
+    else
+      nil
+    end
+  end
+
   def filename
     File.join(directory, basename)
   end
