@@ -39,7 +39,7 @@ end.parse!
 
 def import(filename, options, top)
   case
-  when (top || recurse) && File.directory?(filename)
+  when (top || options[:recurse]) && File.directory?(filename)
     Dir[File.join(filename, "*")].each do |f|
       import(f, options, false)
     end
