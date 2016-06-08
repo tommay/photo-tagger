@@ -38,23 +38,25 @@ class Photo
   end
 
   def self.find_or_create(filename)
+    photo = find_or_new(filename)
+    if photo.new?
+      photo.filedate = File.mtime(photo.filename)
+      photo.created_at = Time.now
+
+      pixbuf = Gdk::Pixbuf.new(file: filename)
+      photo.sha1 = Base64.strict_encode64(Digest::SHA1.digest(pixbuf.pixels))
+
+      photo.save
+    end
+    photo
+  end
+
+  def self.find_or_new(filename)
     realpath = Pathname.new(filename).realpath
     directory = realpath.dirname.to_s
     basename = realpath.basename.to_s
 
-    photo = first(directory: directory, basename: basename)
-    if !photo
-      filedate = File.mtime(realpath)
-
-      pixbuf = Gdk::Pixbuf.new(file: filename)
-      sha1 = Base64.strict_encode64(Digest::SHA1.digest(pixbuf.pixels))
-
-      photo = Photo.create(directory: directory, basename: basename,
-                           sha1: sha1,
-                           filedate: filedate, created_at: Time.now)
-      photo.save
-    end
-    photo
+    first_or_new(directory: directory, basename: basename)
   end
 
   def filename
