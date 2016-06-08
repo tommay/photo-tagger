@@ -87,6 +87,7 @@ GEM
     json (1.8.3)
     json_pure (1.8.3)
     multi_json (1.12.1)
+    nokogiri (1.5.11)
     pango (3.0.8)
       cairo (>= 1.14.0)
       glib2 (= 3.0.8)
@@ -102,6 +103,7 @@ DEPENDENCIES
   data_mapper
   dm-sqlite-adapter
   gtk3
+  nokogiri
 
 BUNDLED WITH
-   1.12.1
+   1.12.5
