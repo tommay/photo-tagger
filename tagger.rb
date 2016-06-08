@@ -159,13 +159,13 @@ class Viewer
 
     # Finally, the top-level window.
 
-    window = Gtk::Window.new.tap do |o|
+    @window = Gtk::Window.new.tap do |o|
       o.title = "Viewer"
       # o.override_background_color(:normal, Gdk::RGBA::new(0.2, 0.2, 0.2, 1))
       o.set_default_size(300, 280)
       o.position = :center
     end
-    window.add(box)
+    @window.add(box)
 
     @tag_entry.signal_connect("activate") do |widget|
       tag = widget.text.strip
@@ -192,7 +192,7 @@ class Viewer
 
     load_available_tags
 
-    window.signal_connect("key_press_event") do |widget, event|
+    @window.signal_connect("key_press_event") do |widget, event|
       # Gdk::Keyval.to_name(event.keyval)
       case event.keyval
       when Gdk::Keyval::KEY_Left
@@ -212,12 +212,12 @@ class Viewer
       end
     end
 
-    window.signal_connect("destroy") do
+    @window.signal_connect("destroy") do
       save_state
       Gtk.main_quit
     end
 
-    window.show_all
+    @window.show_all
   end
 
   def load_photo(filename)
@@ -242,9 +242,7 @@ class Viewer
   end
 
   def show_filename
-    if @filename_label
-      @filename_label.set_text(@photo && @photo.filename)
-    end
+    @window.title = "Viewer: #{@photo && @photo.filename}"
   end
 
   def show_image
