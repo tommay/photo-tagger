@@ -204,12 +204,12 @@ def set_filename(filename)
         next_photo
       when Gdk::Keyval::KEY_s
         if event.state == Gdk::ModifierType::CONTROL_MASK
-          save_state
+          save_last
           true
         end
       when Gdk::Keyval::KEY_r
         if event.state == Gdk::ModifierType::CONTROL_MASK
-          restore_state
+          restore_last
           true
         end
       when Gdk::Keyval::KEY_comma
@@ -232,7 +232,7 @@ def set_filename(filename)
     end
 
     @window.signal_connect("destroy") do
-      save_state
+      save_last
       Gtk.main_quit
     end
 
@@ -327,20 +327,19 @@ def set_filename(filename)
     end
   end
 
-  def save_state
+  def save_last
     if @photo
-      state = State.first_or_create
-      state.photo_id = @photo.id
-      state.save
+      last = Last.first_or_new(directory: @photo.directory)
+      last.filename = @photo.filename
+      last.save
     end
   end
 
-  def restore_state
-    state = State.first
-    if state
-      photo = Photo.get(state.photo_id)
-      if photo
-        filename = photo.filename
+  def restore_last
+    if @photo
+      last = Last.get(@photo.directory)
+      if last
+        filename = last.filename
         if File.exist?(filename)
           set_filename(filename)
           load_photo(filename)

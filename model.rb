@@ -113,11 +113,11 @@ class Tag
   end
 end
 
-class State
+class Last
   include DataMapper::Resource
 
-  property :id, Serial
-  property :photo_id, Integer, required: true
+  property :directory, String, length: 5000, key: true
+  property :filename, String, length: 5000, required: true
 end
 
 DataMapper.finalize
