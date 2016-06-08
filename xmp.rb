@@ -11,7 +11,7 @@ class Xmp
   end
 
   def get_tags
-    xmp.css("dc|subject rdf|li", NAMESPACES).map do |tag|
+    @xmp.css("dc|subject rdf|li", NAMESPACES).map do |tag|
       tag.text
     end
   end
