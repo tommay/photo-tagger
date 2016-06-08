@@ -4,7 +4,7 @@ require "bundler/setup"
 require "optparse"
 require "byebug"
 
-require_relative "model"
+require_relative "../model"
 
 add = []
 remove = []

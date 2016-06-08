@@ -7,6 +7,7 @@ require "byebug"
 require_relative "model"
 require_relative "files"
 require_relative "importer"
+require_relative "savelist"
 
 class Viewer
   def initialize(filename)
@@ -24,9 +25,11 @@ class Viewer
     init_ui
 
     load_photo(@filenames[@nfile])
+
+    @recent = SaveList.new([])
   end
 
-  def set_filename(filename)
+def set_filename(filename)
     # If filename is a directory set dirname to its directorey, else to nil.
     if filename =~ /#{Regexp.quote(File::SEPARATOR)}/
       dirname = File.dirname(filename)
@@ -209,6 +212,22 @@ class Viewer
           restore_state
           true
         end
+      when Gdk::Keyval::KEY_comma
+        tags = @photo.tags.map {|t| t.tag}
+        @photo.tags.clear
+        @recent.older(tags).each do |t|
+          @photo.add_tag(t)
+        end
+        @photo.save
+        load_applied_tags
+      when Gdk::Keyval::KEY_period
+        tags = @photo.tags.map {|t| t.tag}
+        @photo.tags.clear
+        @recent.newer(tags).each do |t|
+          @photo.add_tag(t)
+        end
+        @photo.save
+        load_applied_tags
       end
     end
 
@@ -230,7 +249,15 @@ class Viewer
     show_image
   end
 
+  def save_recent_tags
+    tags = @photo.tags.map do |t|
+      t.tag
+    end
+    @recent.add(tags)
+  end
+
   def next_photo(delta = 1)
+    save_recent_tags
     if @filenames.size > 0
       @nfile = (@nfile + delta) % @filenames.size
     end
