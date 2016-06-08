@@ -22,7 +22,7 @@ class Viewer
 
     init_ui
 
-    load_photo(@filenames[@nfile])
+    import_photo(@filenames[@nfile])
   end
 
   def set_filename(filename)
@@ -219,7 +219,7 @@ class Viewer
     window.show_all
   end
 
-  def load_photo(filename)
+  def import_photo(filename)
     @photo = filename && Photo.find_or_create(filename)
     load_applied_tags
     load_directory_tags
@@ -231,7 +231,7 @@ class Viewer
     if @filenames.size > 0
       @nfile = (@nfile + delta) % @filenames.size
     end
-    load_photo(@filenames[@nfile])
+    import_photo(@filenames[@nfile])
   end
 
   def prev_photo
@@ -315,7 +315,7 @@ class Viewer
         filename = photo.filename
         if File.exist?(filename)
           set_filename(filename)
-          load_photo(filename)
+          import_photo(filename)
         end
       end
     end
