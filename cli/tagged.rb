@@ -27,5 +27,5 @@ filenames = photos.map do |photo|
 end
 
 filenames.sort.each do |filename|
-  puts filename
+  print "#{filename}\0"
 end
