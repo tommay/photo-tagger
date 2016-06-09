@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "optparse"
+require "trollop"
 require "byebug"
 require_relative "../model"
 require_relative "../files"
@@ -11,23 +11,13 @@ require_relative "../xmp"
 #   If there's a matching image file by name, then export its tags
 #   to an xmp sidecar file, adding to any existing tags (?).
 
-options = {}
-
-OptionParser.new do |opts|
-  opts.banner = "Usage: $0 [options] [directory...]"
-
-  opts.on("-r", "Recurse directories") do
-    options[:recurse] = true
-  end
-
-  opts.on("-h", "--help", "Print this help") do
-    puts opts
-    exit
-  end
-end.parse!
+options = Trollop::options do
+  banner "Usage: #{$0} [options] file|directory..."
+  opt :recurse, "Recurse into directories"
+end
 
 def export(filename, options)
-  Files.image_files(filename, options[:recurse]).each do |file|
+  Files.image_files(filename, options.recurse).each do |file|
     export_to_sidecar(file)
   end
 end

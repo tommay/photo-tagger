@@ -1,36 +1,18 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "optparse"
+require "trollop"
 require "byebug"
 
 require_relative "../model"
 require_relative "../files"
 
-add = []
-remove = []
-recurse = false
-
-OptionParser.new do |opts|
-  opts.banner = "Usage: $0 [options] [filename...]"
-
-  opts.on("-a", "--add TAG", "Add TAG to files") do |tag|
-    add << tag
-  end
-
-  opts.on("-R", "--remove TAG", "Remove TAG from files") do |tag|
-    remove << tag
-  end
-
-  opts.on("-r", "Recurse directories") do
-    recurse = true
-  end
-
-  opts.on("-h", "--help", "Print this help") do
-    puts opts
-    exit
-  end
-end.parse!
+options = Trollop::options do
+  banner "Usage: #{$0} [options] file|directory..."
+  opt :add, "Add tag to images", type: String, multi: true
+  opt :remove, "Add tag to images", short: :R, type: String, multi: true
+  opt :recurse, "Recurse into directories"
+end
 
 def tag(filename, add, remove)
   photo = Photo.find_or_create(filename)
@@ -45,7 +27,7 @@ def tag(filename, add, remove)
 end
 
 ARGV.each do |filename|
-  Files.image_files(filename, recurse).each do |file|
-    tag(file, add, remove)
+  Files.image_files(filename, options.recurse).each do |file|
+    tag(file, options.add, options.remove)
   end
 end

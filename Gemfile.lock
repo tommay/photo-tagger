@@ -93,6 +93,7 @@ GEM
       glib2 (= 3.0.8)
     pkg-config (1.1.7)
     stringex (1.5.1)
+    trollop (2.1.2)
     uuidtools (2.1.5)
 
 PLATFORMS
@@ -104,6 +105,7 @@ DEPENDENCIES
   dm-sqlite-adapter
   gtk3
   nokogiri
+  trollop
 
 BUNDLED WITH
    1.12.5

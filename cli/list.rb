@@ -1,8 +1,7 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "optparse"
-require "pathname"
+require "trollop"
 require "byebug"
 require_relative "../model"
 
@@ -10,34 +9,18 @@ require_relative "../model"
 #   -f list files in the database
 #   -d list directories in the database
 
-opt_files = false
-opt_directories = true
-
-OptionParser.new do |opts|
-  opts.banner = "Usage: $0 [options]"
-
-  opts.on("-f", "List files") do
-    opt_files = true
-    opt_directories = false
-  end
-
-  opts.on("-d", "List directories") do
-    opt_files = false
-    opt_directories = true
-  end
-
-  opts.on("-h", "--help", "Print this help") do
-    puts opts
-    exit
-  end
-end.parse!
+options = Trollop::options do
+  banner "Usage: #{$0} [options]"
+  opt :files, "List files in the database"
+  opt :directories, "List directories in the database"
+end
 
 case
-when opt_files
+when options.files
   Photo.all.each do |photo|
     puts "#{photo.filename}"
   end
-when opt_directories
+when options.directories
   Photo.all(:fields => [:directory], :unique => true, :order => [:directory.asc]).each do |photo|
     puts "#{photo.directory}"
   end

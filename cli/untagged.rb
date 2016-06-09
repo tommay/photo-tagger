@@ -1,30 +1,16 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "optparse"
+require "trollop"
 require "byebug"
 require_relative "../files"
 require_relative "../importer"
 
-recurse = false
-list_directories = false
-
-OptionParser.new do |opts|
-  opts.banner = "Usage: $0 [options] [directory...]"
-
-  opts.on("-d", "List directories with untagged files") do
-    list_directories = true
-  end
-
-  opts.on("-r", "Recurse directories") do
-    recurse = true
-  end
-
-  opts.on("-h", "--help", "Print this help") do
-    puts opts
-    exit
-  end
-end.parse!
+options = Trollop::options do
+  banner "Usage: #{$0} [options] file|directory..."
+  opt :directories, "List directories with untagged files"
+  opt :recurse, "Recurse into directories"
+end
 
 @directories = {}
 
@@ -46,5 +32,5 @@ def untagged(filename, recurse, list_directories)
 end
 
 ARGV.each do |filename|
-  untagged(filename, recurse, list_directories)
+  untagged(filename, options.recurse, options.directories)
 end

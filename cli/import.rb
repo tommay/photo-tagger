@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "optparse"
+require "trollop"
 require "byebug"
 require_relative "../files"
 require_relative "../importer"
@@ -13,32 +13,17 @@ require_relative "../importer"
 #   -r to recurse into directories.
 #   XXX might want a way to replace tags instead of add.
 
-options = {}
-
-OptionParser.new do |opts|
-  opts.banner = "Usage: $0 [options] [directory...]"
-
-  opts.on("-c", "Copy tags from identical images") do
-    options[:copy_tags] = true
-  end
-
-  opts.on("-p", "Purge identical images that no longer exist") do
-    options[:purge_identical_images] = true
-  end
-
-  opts.on("-r", "Recurse directories") do
-    options[:recurse] = true
-  end
-
-  opts.on("-h", "--help", "Print this help") do
-    puts opts
-    exit
-  end
-end.parse!
+options = Trollop::options do
+  banner "Usage: #{$0} [options] file|directory..."
+  opt :copy, "Copy tags from existing identical images"
+  opt :purge, "Purge identical images that no longer exist"
+  opt :recurse, "Recurse into directories"
+end
 
 def import(filename, options)
-  Files.image_files(filename, options[:recurse]).each do |file|
-    Importer.find_or_import_from_file(file, options)
+  Files.image_files(filename, options.recurse).each do |file|
+    Importer.find_or_import_from_file(
+      file, copy_tags: options.copy, purge_identical_images: options.purge)
   end
 end
 
