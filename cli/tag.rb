@@ -5,9 +5,11 @@ require "optparse"
 require "byebug"
 
 require_relative "../model"
+require_relative "../files"
 
 add = []
 remove = []
+recurse = false
 
 OptionParser.new do |opts|
   opts.banner = "Usage: $0 [options] [filename...]"
@@ -16,8 +18,12 @@ OptionParser.new do |opts|
     add << tag
   end
 
-  opts.on("-r", "--remove TAG", "Remove TAG from files") do |tag|
+  opts.on("-R", "--remove TAG", "Remove TAG from files") do |tag|
     remove << tag
+  end
+
+  opts.on("-r", "Recurse directories") do
+    recurse = true
   end
 
   opts.on("-h", "--help", "Print this help") do
@@ -26,7 +32,7 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-ARGV.each do |filename|
+def tag(filename, add, remove)
   photo = Photo.find_or_create(filename)
 
   add.each do |tag|
@@ -35,5 +41,11 @@ ARGV.each do |filename|
 
   remove.each do |tag|
     photo.remove_tag(tag)
+  end
+end
+
+ARGV.each do |filename|
+  Files.image_files(filename, recurse).each do |file|
+    tag(file, add, remove)
   end
 end
