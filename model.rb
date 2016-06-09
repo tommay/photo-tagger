@@ -82,7 +82,7 @@ class Photo
     # it does nothing.
     # self.tags.first_or_create(tag: string)
     # So do it the hard way.
-    tag = Tag.first_or_create(tag: string)
+    tag = Tag.ensure(string)
     if !self.tags.include?(tag)
       self.tags << tag
       self.save
@@ -105,8 +105,13 @@ class Tag
 
   property :id, Serial
   property :tag, String, length: 100, required: true, unique: true
+  property :created_at, DateTime #, required: true
 
   has n, :photos, through: Resource
+
+  def self.ensure(tag)
+    Tag.first_or_create({tag: tag}, {created_at: Time.now})
+  end
 
   def self.for_directory(directory)
     Photo.all(directory: directory).tags

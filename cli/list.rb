@@ -28,7 +28,7 @@ when options.directories
     puts "#{photo.directory}"
   end
 when options.tags
-  Tag.all.map{|t|t.tag}.sort.each do |tag|
-    puts "#{tag}"
+  Tag.all(order: [:created_at.desc]).each do |tag|
+    puts "%-20s %s" % [tag.tag, tag.created_at]
   end
 end
