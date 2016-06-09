@@ -36,12 +36,12 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-def import(filename, options, top)
+def import(filename, options)
   Files.image_files(filename, options[:recurse]).each do |file|
     Importer.find_or_import_from_file(file, options)
   end
 end
 
 ARGV.each do |filename|
-  import(filename, options, true)
+  import(filename, options)
 end
