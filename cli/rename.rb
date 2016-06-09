@@ -32,12 +32,13 @@ if !new_tag
   old_tag.tag = new_name
   old_tag.save
 else
-  # Move photos from the old_tag to new_tag.
+  # Add new_tag to old_tag's photos.
   old_tag.photos.each do |photo|
-    new_tag.photos += [photo]
-    old_tag.photos -= [photo]
-  end
-  # Udate new_tag and get rid of now-unused old_tag.
-  new_tag.save
+    photo.tags << new_tag
+    photo.save
+ end
+  # Destroy old_tag.
+  old_tag.photos.clear
+  old_tag.save
   old_tag.destroy
 end
