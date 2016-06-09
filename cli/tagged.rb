@@ -5,16 +5,27 @@ require "trollop"
 require "byebug"
 require_relative "../model"
 
-options = Trollop::options do
-  banner "Usage: #{$0} tag..."
+#options = Trollop::options do
+#  banner "Usage: #{$0} tag..."
+#end
+
+photos = ARGV.map do |tag|
+  tag =~ /^(-?)(.*)/
+  [$1, Tag.all(:tag.like => $2).photos]
 end
 
-ARGV.map do |tag|
-  Tag.all(:tag.like => tag).photos
-end.reduce do |memo, photos|
-  memo & photos
-end.map do |photo|
+_, photos = photos.reduce do |(_, memo), (type, photos)|
+  if type == "-"
+    [nil, memo - photos]
+  else
+    [nil, memo & photos]
+  end
+end
+
+filenames = photos.map do |photo|
   photo.filename
-end.sort.each do |filename|
+end
+
+filenames.sort.each do |filename|
   puts filename
 end
