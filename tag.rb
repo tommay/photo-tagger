@@ -1,7 +1,9 @@
 #!/usr/bin/env ruby
 
+require "pathname"
+
 cmd = ARGV.shift
-cli = File.join(File.expand_path(File.dirname(__FILE__)), "cli")
+cli = File.join(File.dirname(Pathname.new(__FILE__).realpath), "cli")
 cmd_file = File.join(cli, "#{cmd}.rb")
 if File.exist?(cmd_file)
   load cmd_file
