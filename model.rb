@@ -8,6 +8,8 @@ require "base64"
 require "exiv2"
 require "byebug"
 
+DB_FILE = ENV["TAGGER_DB"] || "/home/tom/tagger/tags.db"
+
 # XXX Use Integer instead of DateTime?
 
 class Photo
@@ -149,24 +151,36 @@ class Last
   property :filename, String, length: 5000, required: true
 end
 
-DataMapper.finalize
-
 # Throw exceptions instead of silently returning false.
 #
 DataMapper::Model.raise_on_save_failure = true
-
-db_file = "/home/tom/tagger/tags.db"
 
 # If you want the logs displayed you have to do this before the call to setup
 #
 DataMapper::Logger.new($stdout, :info)
 
-# A Sqlite3 connection to a persistent database
-#
-DataMapper.setup(:default, "sqlite://#{db_file}")
+module Model
+  def self.setup(name, file)
+    # A Sqlite3 connection to a persistent database
+    #
+    DataMapper.setup(name, "sqlite://#{file}")
 
-# Create the file+schema if it doesn't exist.
-#
-if !File.exist?(db_file)
-  DataMapper.auto_migrate!
+    # XXX Not sure if this is per-repository or global.
+    DataMapper.repository(name) do
+      DataMapper.finalize
+    end
+
+    # Create the file+schema if it doesn't exist.
+    #
+    if !File.exist?(file)
+      DataMapper.repository(name) do
+        # XXX This is supposed to work but it only works for ;default.
+        # It may have something to so with the Model's
+        # default_repository_name.
+        DataMapper.auto_migrate!
+      end
+    end
+  end
 end
+
+Model.setup(:default, DB_FILE)
