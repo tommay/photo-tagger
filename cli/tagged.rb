@@ -7,10 +7,16 @@ require_relative "../model"
 
 options = Trollop::options do
   banner "Usage: #{$0} tag..."
+  opt :nul, "Nul-terminate output filenames"
+  opt :null, "Same as --nul"
   opt :tags, "Show files' tags"
   opt :ugly, "Show files' tags in tag -a ... format"
+  conflicts :nul, :tags, :ugly
+  conflicts :null, :tags, :ugly
   stop_on_unknown
 end
+
+terminator = (options.nul || options.null) ? "\0" : "\n"
 
 photos = ARGV.map do |tag|
   tag =~ /^(-?)(.*)/
@@ -53,6 +59,6 @@ else
   end
 
   filenames.sort.each do |filename|
-    print "#{filename}\0"
+    print "#{filename}#{terminator}"
   end
 end
