@@ -8,6 +8,7 @@ require_relative "../model"
 options = Trollop::options do
   banner "Usage: #{$0} tag..."
   opt :tags, "Show files' tags"
+  opt :ugly, "Show files' tags in tag -a ... format"
   stop_on_unknown
 end
 
@@ -24,7 +25,14 @@ _, photos = photos.reduce do |(_, memo), (type, photos)|
   end
 end
 
-if options.tags
+def quote(s)
+  s.gsub(/\\/, "\\\\")
+  s.gsub(/"/, "\\\"")
+  s.gsub(/\$/, "\\$")
+  "\"#{s}\""
+end
+
+if options.tags || options.ugly
   photos = photos.map do |photo|
     [photo.filename, photo.tags.map{|t|t.tag}.sort]
   end
@@ -32,7 +40,12 @@ if options.tags
   photos = photos.sort_by{|p| p[0]}
 
   photos.each do |photo|
-    puts "#{photo[0]}: #{photo[1].join(", ")}"
+    if options.ugly
+      photo[1].each { |t| print " -a #{quote(t)}" }
+      puts " #{quote(photo[0])}"
+    else
+      puts "#{photo[0]}: #{photo[1].join(", ")}"
+    end
   end
 else
   filenames = photos.map do |photo|
