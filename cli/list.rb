@@ -20,8 +20,10 @@ end
 
 case
 when options.files
-  Photo.all.each do |photo|
-    puts "#{photo.filename}"
+  Photo.all.map do |photo|
+    photo.filename
+  end.sort.each do |filename|
+    puts filename
   end
 when options.directories
   Photo.all(:fields => [:directory], :unique => true, :order => [:directory.asc]).each do |photo|
