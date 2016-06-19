@@ -202,6 +202,8 @@ def set_filename(filename)
         prev_photo
       when Gdk::Keyval::KEY_Right
         next_photo
+      when Gdk::Keyval::KEY_Delete
+        delete_file
       when Gdk::Keyval::KEY_s
         if event.state == Gdk::ModifierType::CONTROL_MASK
           save_last
@@ -325,6 +327,32 @@ def set_filename(filename)
         @directory_tags_list.append[0] = tag.tag
       end
     end
+  end
+
+  # XXX Wow this is ugly.
+  #
+  def delete_file
+    photo_filename = @photo.filename
+    photo_dirname = File.dirname(photo_filename)
+    deleted_dirname = File.join(photo_dirname, ".deleted")
+    begin
+      Dir.mkdir(deleted_dirname)
+    rescue Errno::EEXIST => ex
+    end
+    File.basename(photo_filename) =~ /^([^.]+)/
+    base = $1
+    Dir[File.join(photo_dirname, "#{base}.*")].each do |n|
+      basename = File.basename(n)
+      File.rename(n, File.join(deleted_dirname, basename))
+    end
+
+    # XXX handle when there is no next.
+
+    @filenames.delete_at(@nfile)
+    if @nfile >= @filenames.size
+      @nfile -= 1
+    end
+    load_photo(@filenames[@nfile])
   end
 
   def save_last
