@@ -204,6 +204,8 @@ def set_filename(filename)
         next_photo
       when Gdk::Keyval::KEY_Delete
         delete_file
+      when Gdk::Keyval::KEY_u
+        undelete_file
       when Gdk::Keyval::KEY_s
         if event.state == Gdk::ModifierType::CONTROL_MASK
           save_last
@@ -341,9 +343,16 @@ def set_filename(filename)
     end
     File.basename(photo_filename) =~ /^([^.]+)/
     base = $1
+
+    # Remember the last file deleted for crufty undelete.
+
+    @deleted_filename = @filenames[@nfile]
+    @deleted_nfile = @nfile
+    @deleted_files = []
     Dir[File.join(photo_dirname, "#{base}.*")].each do |n|
-      basename = File.basename(n)
-      File.rename(n, File.join(deleted_dirname, basename))
+      deleted = File.join(deleted_dirname, File.basename(n))
+      File.rename(n, deleted)
+      @deleted_files << [n, deleted]
     end
 
     # XXX handle when there is no next.
@@ -353,6 +362,22 @@ def set_filename(filename)
       @nfile -= 1
     end
     load_photo(@filenames[@nfile])
+  end
+
+  # XXX this is super-crufty.
+  #
+  def undelete_file
+    if @deleted_files
+      @deleted_files.each do |name, deleted|
+        File.rename(deleted, name)
+      end
+      @deleted_files = nil
+
+      @nfile = @deleted_nfile
+      @filenames.insert(@nfile, @deleted_filename)
+
+      load_photo(@filenames[@nfile])
+    end
   end
 
   def save_last
