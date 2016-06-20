@@ -48,9 +48,7 @@ class Photo
       photo.created_at = Time.now
 
       photo.taken_time = extract_time(filename)
-
-      pixbuf = Gdk::Pixbuf.new(file: filename)
-      photo.sha1 = Base64.strict_encode64(Digest::SHA1.digest(pixbuf.pixels))
+      photo.sha1 = compute_sha1(filename)
 
       photo.save
     end
@@ -75,6 +73,11 @@ class Photo
       date.gsub!(/:/, "-")
       "#{date} #{time}"
     end
+  end
+
+  def self.compute_sha1(filename)
+    pixbuf = Gdk::Pixbuf.new(file: filename)
+    Base64.strict_encode64(Digest::SHA1.digest(pixbuf.pixels))
   end
 
   def self.find_or_new(filename)
