@@ -227,6 +227,11 @@ class Viewer
           rename_directory_dialog
           true
         end
+      when Gdk::Keyval::KEY_n
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          next_directory
+          true
+        end
       when Gdk::Keyval::KEY_s
         if event.state == Gdk::ModifierType::CONTROL_MASK
           save_last
@@ -292,6 +297,17 @@ class Viewer
 
   def prev_photo
     next_photo(-1)
+  end
+
+  def next_directory
+    current = @photo.directory
+    parent = File.dirname(current)
+    siblings = Dir[File.join(parent), "*"].select{|x| File.directory?(x)}.sort
+    index = siblings.index(File.basename(current))
+    if index && index + 1 < siblings.size
+      next_directory = File.join(parent, siblings[index + 1])
+      set_filename(next_directory)
+    end
   end
 
   def show_filename
