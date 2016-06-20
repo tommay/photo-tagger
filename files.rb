@@ -21,9 +21,11 @@ module Files
     end
   end
 
+  # XXX private
   def self.enumerate_image_files(filename, recurse, top, yielder)
     case
-    when (top || recurse) && File.directory?(filename)
+    when (top || recurse) && File.directory?(filename) &&
+         File.basename(filename) != ".deleted"
       Dir[File.join(filename, "*")].each do |f|
         enumerate_image_files(f, recurse, false, yielder)
       end
