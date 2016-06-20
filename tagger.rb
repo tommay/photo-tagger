@@ -210,8 +210,11 @@ def set_filename(filename)
         next_photo
       when Gdk::Keyval::KEY_Delete
         delete_file
-      when Gdk::Keyval::KEY_u
-        undelete_file
+      when Gdk::Keyval::KEY_z
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          undelete_file
+          true
+        end
       when Gdk::Keyval::KEY_s
         if event.state == Gdk::ModifierType::CONTROL_MASK
           save_last
