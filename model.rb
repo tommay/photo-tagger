@@ -5,6 +5,7 @@ require "gtk3"
 require "pathname"
 require "digest"
 require "base64"
+require "exiv2"
 require "byebug"
 
 # XXX Use Integer instead of DateTime?
@@ -17,6 +18,7 @@ class Photo
   property :basename, String, length: 500, required: true, unique_index: :name
   property :sha1, String, length: 28, required: true, index: :sha1
   property :filedate, DateTime, required: true # Date file was modified.
+  property :taken_time, String, length: 100
   property :created_at, DateTime, required: true # Date this row was updated.
 
   has n, :tags, through: Resource
@@ -43,12 +45,34 @@ class Photo
       photo.filedate = File.mtime(photo.filename)
       photo.created_at = Time.now
 
+      photo.taken_time = extract_time(filename)
+
       pixbuf = Gdk::Pixbuf.new(file: filename)
       photo.sha1 = Base64.strict_encode64(Digest::SHA1.digest(pixbuf.pixels))
 
       photo.save
     end
     photo
+  end
+
+  def self.extract_time(filename)
+    # exiftool goes to great lengths to deal with non-conforming
+    # dates.  No idea what exiv2 does if anything, other than writing
+    # lots of warnings to stderr.
+    date =
+      begin
+        exiv2 = Exiv2::ImageFactory.open(filename)
+        exiv2.read_metadata
+        exiv2.exif_data["Exif.Photo.DateTimeOriginal"]
+      rescue
+        nil
+      end
+    date = date.first if Array === date
+    if date && date !~ /^0/
+      date, time = date.split(" ")
+      date.gsub!(/:/, "-")
+      "#{date} #{time}"
+    end
   end
 
   def self.find_or_new(filename)
