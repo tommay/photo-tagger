@@ -170,6 +170,12 @@ def set_filename(filename)
     end
     @window.add(box)
 
+    @image.signal_connect("size-allocate") do |widget, rectangle|
+      if @pixbuf
+        show_scaled_image(@image, @pixbuf)
+      end
+    end
+
     @tag_entry.signal_connect("activate") do |widget|
       tag = widget.text.strip
       widget.set_text("")
@@ -240,6 +246,7 @@ def set_filename(filename)
       Gtk.main_quit
     end
 
+    #@window.maximize
     @window.show_all
   end
 
@@ -250,7 +257,7 @@ def set_filename(filename)
     load_applied_tags
     load_directory_tags
     show_filename
-    show_image
+    show_photo
   end
 
   def save_recent_tags
@@ -276,20 +283,29 @@ def set_filename(filename)
     @window.title = "Viewer: #{@photo && @photo.filename}"
   end
 
-  def show_image
+  def show_photo
     if @photo
-      pixbuf = Gdk::Pixbuf.new(file: @photo.filename)
-      image_width = @image.allocated_width
-      image_height = @image.allocated_height
+      @pixbuf = Gdk::Pixbuf.new(file: @photo.filename)
+      show_scaled_image(@image, @pixbuf)
+    else
+      @image.set_pixbuf(nil)
+    end
+  end
+
+  def show_scaled_image(image, pixbuf)
+    image_width = image.allocated_width
+    image_height = image.allocated_height
+    if !@last_image_size || @last_image_size != [image_width, image_height] ||
+       @last_pixbuf != pixbuf
+      @last_image_size = [image_width, image_height]
+      @last_pixbuf = pixbuf
       pixbuf_width = pixbuf.width
       pixbuf_height = pixbuf.height
       width_ratio = image_width.to_f / pixbuf_width
       height_ratio = image_height.to_f / pixbuf_height
       ratio = width_ratio < height_ratio ? width_ratio : height_ratio
-      scaled = pixbuf.scale(pixbuf_width * ratio, pixbuf_height * ratio)
-      @image.set_pixbuf(scaled)
-    else
-      @image.set_pixbuf(nil)
+      scaled = @pixbuf.scale(pixbuf_width * ratio, pixbuf_height * ratio)
+      image.set_pixbuf(scaled)
     end
   end
 
