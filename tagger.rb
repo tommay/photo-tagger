@@ -8,34 +8,33 @@ require_relative "model"
 require_relative "files"
 require_relative "importer"
 require_relative "savelist"
+require_relative "entry_dialog"
 
 class Viewer
   def initialize(filename)
+    init_ui
+    set_filename(filename)
+    @recent = SaveList.new([])
+  end
+
+  def set_filename(filename)
     case
     when !filename || File.directory?(filename)
       @filenames = Files.for_directory(filename)
       @nfile = 0
     when File.exist?(filename)
-      set_filename(filename)
+      # If filename has a path set dirname to its directory, else to nil.
+      if filename =~ /#{Regexp.quote(File::SEPARATOR)}/
+        dirname = File.dirname(filename)
+      end
+      @filenames = Files.for_directory(dirname)
+      @nfile = @filenames.find_index(filename)
     else
       puts "#{filename} not found"
       exit(1)
     end
 
-    init_ui
-
     load_photo(@filenames[@nfile])
-
-    @recent = SaveList.new([])
-  end
-
-def set_filename(filename)
-    # If filename is a directory set dirname to its directorey, else to nil.
-    if filename =~ /#{Regexp.quote(File::SEPARATOR)}/
-      dirname = File.dirname(filename)
-    end
-    @filenames = Files.for_directory(dirname)
-    @nfile = @filenames.find_index(filename)
   end
 
   # The tag TreeViews are all nearly the same, so create them here.
@@ -223,6 +222,11 @@ def set_filename(filename)
           undelete_file
           true
         end
+      when Gdk::Keyval::KEY_v
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          rename_directory_dialog
+          true
+        end
       when Gdk::Keyval::KEY_s
         if event.state == Gdk::ModifierType::CONTROL_MASK
           save_last
@@ -405,6 +409,41 @@ def set_filename(filename)
 
       load_photo(@filenames[@nfile])
     end
+  end
+
+  def rename_directory_dialog
+    EntryDialog.new(
+      title: "Rename Directory", parent: @window,
+      text: @photo.directory,
+      width_chars: @photo.directory.size + 20) do |text|
+      begin
+        rename_photos_directory(text)
+      rescue => ex
+        dialog = Gtk::MessageDialog.new(
+          type: Gtk::MessageType::ERROR,
+          message: "#{text}: #{ex}",
+          buttons: :ok,
+          parent: @window,
+          flags: Gtk::DialogFlags::DESTROY_WITH_PARENT)
+        dialog.run
+        dialog.destroy
+      end
+    end
+  end
+
+  # XXX Ths breaks deleted files.
+  def rename_photos_directory(new_directory)
+    if File.exist?(new_directory)
+      raise "#{new_directory} already exists"
+    end
+    File.rename(@photo.directory, new_directory)
+
+    Photo.all(directory: @photo.directory).each do |photo|
+      photo.directory = new_directory
+      photo.save
+    end
+
+    set_filename(File.join(new_directory, @photo.basename))
   end
 
   def save_last
