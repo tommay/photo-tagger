@@ -48,7 +48,7 @@ class Photo
       photo.created_at = Time.now
 
       photo.taken_time = extract_time(filename)
-      photo.sha1 = compute_sha1(filename)
+      photo.set_sha1
 
       photo.save
     end
@@ -73,6 +73,10 @@ class Photo
       date.gsub!(/:/, "-")
       "#{date} #{time}"
     end
+  end
+
+  def set_sha1
+    self.sha1 = Photo.compute_sha1(self.filename)
   end
 
   def self.compute_sha1(filename)

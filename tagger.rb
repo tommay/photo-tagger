@@ -245,6 +245,11 @@ class Viewer
           prev_directory
           true
         end
+      when Gdk::Keyval::KEY_6
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          crop_6mm
+          true
+        end
       when Gdk::Keyval::KEY_s
         if event.state == Gdk::ModifierType::CONTROL_MASK
           save_last
@@ -424,23 +429,16 @@ class Viewer
   def delete_file
     return if !@photo
 
-    photo_filename = @photo.filename
-    photo_dirname = File.dirname(photo_filename)
-
     # If we're not in a .deleted directory, then delete by creating
     # and renaming to a .deleted subdirectory.  If we're in a .deleted
     # directory, then delete by renaming/restoring to the parent
     # directory.
 
     deleted_dirname =
-      if File.basename(photo_dirname) != ".deleted"
-        File.join(photo_dirname, ".deleted").tap do |dir|
-          if !File.exist?(dir)
-            Dir.mkdir(dir)
-          end
-        end
+      if File.basename(@directory) != ".deleted"
+        create_deleted_dir(@directory)
       else
-        File.dirname(photo_dirname)
+        File.dirname(@directory)
       end
 
     # Remember the last file deleted for crufty undelete.
@@ -451,10 +449,10 @@ class Viewer
 
     # Delete everything with the same basename regardless of suffix.
 
-    File.basename(photo_filename) =~ /^(.*)\./
-    base = $1 || photo_filename
+    File.basename(@photo.filename) =~ /^(.*)\./
+    base = $1 || @photo.filename
 
-    Dir[File.join(photo_dirname, "#{base}.*")].each do |n|
+    Dir[File.join(@directory, "#{base}.*")].each do |n|
       deleted = File.join(deleted_dirname, File.basename(n))
       File.rename(n, deleted)
       @deleted_files << [n, deleted]
@@ -464,6 +462,7 @@ class Viewer
     if @nfile >= @filenames.size
       @nfile -= 1
     end
+
     load_photo(@filenames[@nfile])
   end
 
@@ -473,6 +472,13 @@ class Viewer
     if @deleted_files
       @deleted_files.each do |name, deleted|
         File.rename(deleted, name)
+        # If there is a database entry for this file then make sure
+        # its sha1 is up to date.
+        photo = Photo.find(name)
+        if photo
+          photo.set_sha1
+          photo.save
+        end
       end
       @deleted_files = nil
 
@@ -528,6 +534,46 @@ class Viewer
     end
 
     set_filename(File.join(new_directory, @photo.basename))
+  end
+
+  def crop_6mm
+    return if !@photo
+    return if File.basename(@directory) == ".deleted"
+
+    # Losslessly crop and create a .bak file.
+
+    system("/usr/bin/env", "6mm", @photo.filename)
+
+    # Move the .bak file to .deleted with the original filename.  This
+    # makes it look like we deleted the file.
+
+    deleted_dirname = create_deleted_dir(@directory)
+    deleted_filename = File.join(
+      deleted_dirname, File.basename(@photo.filename))
+    File.rename("#{@photo.filename}.bak", deleted_filename)
+
+    # Set things up so the file can be restored with undelete.
+
+    @deleted_filename = @filenames[@nfile]
+    @deleted_nfile = @nfile
+    @deleted_files = [[@photo.filename, deleted_filename]]
+
+    # Update the sha1.
+
+    @photo.set_sha1
+    @photo.save
+
+    # Show the cropped photo.
+
+    load_photo(@filenames[@nfile])
+  end
+
+  def create_deleted_dir(directory)
+    File.join(directory, ".deleted").tap do |deleted_dirname|
+      if !File.exist?(deleted_dirname)
+        Dir.mkdir(deleted_dirname)
+      end
+    end
   end
 
   def save_last
