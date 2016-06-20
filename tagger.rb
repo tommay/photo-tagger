@@ -184,6 +184,14 @@ def set_filename(filename)
       end
     end
 
+    @applied_tags.signal_connect("button-release-event") do |widget, event|
+      if event.state == Gdk::ModifierType::BUTTON1_MASK
+#        byebug
+#        tag = widget.model.get_iter(path)[0]
+#        puts "Clicked."
+      end
+    end
+
     @applied_tags.signal_connect("row-activated") do |widget, path, column|
       tag = widget.model.get_iter(path)[0]
       remove_tag(tag)
