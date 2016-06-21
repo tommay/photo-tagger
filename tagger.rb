@@ -307,11 +307,13 @@ class Viewer
   def next_directory(delta = 1)
     current = @photo.directory
     parent = File.dirname(current)
-    siblings = Dir[File.join(parent), "*"].select{|x| File.directory?(x)}.sort
-    index = siblings.index(File.basename(current))
-    if index && index + delta >= 0 && index + delta < siblings.size
-      next_directory = File.join(parent, siblings[index + delta])
-      set_filename(next_directory)
+    siblings = Dir[File.join(parent, "*")].select{|x| File.directory?(x)}.sort
+    index = siblings.index(current)
+    if index
+      index += delta
+      if index >= 0 && index < siblings.size
+        set_filename(siblings[index])
+      end
     end
   end
 
