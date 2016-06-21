@@ -6,11 +6,12 @@ require "byebug"
 require_relative "../model"
 
 options = Trollop::options do
-  banner "Usage: #{$0} tag..."
+  banner "Usage: #{$0} [-]tag..."
   opt :nul, "Nul-terminate output filenames"
   opt :null, "Same as --nul"
   opt :tags, "Show files' tags"
   opt :ugly, "Show files' tags in tag -a ... format"
+  opt :date, "Select by date", type: String, multi: true
   conflicts :nul, :tags, :ugly
   conflicts :null, :tags, :ugly
   stop_on_unknown
@@ -18,7 +19,18 @@ end
 
 terminator = (options.nul || options.null) ? "\0" : "\n"
 
-photos = ARGV.map do |tag|
+photos = options.date.map do |date|
+  case date
+  when /^-(.*)/
+    ["", Photo.all(:taken_time.lt => $1)]
+  when /^\+(.*)/
+    ["", Photo.all(:taken_time.gte => $1)]
+  else
+    ["", Photo.all(:taken_time.like => "#{date}%")]
+  end
+end
+
+photos += ARGV.map do |tag|
   tag =~ /^(-?)(.*)/
   [$1, Tag.all(:tag.like => $2).photos]
 end
