@@ -16,16 +16,16 @@ end
 
 def untagged(filename, recurse, list_directories)
   Files.image_files(filename, recurse).each do |file|
-    photo = Importer.find_or_import_from_file(
-      file, copy_tags: true, purge_identical_images: false)
-    if photo.tags.empty?
+    photo = Photo.find(file)
+    if !photo || photo.tags.empty?
       if list_directories
-        if !@directories[photo.directory]
-          @directories[photo.directory] = true
-          puts photo.directory
+        directory = File.dirname(file)
+        if !@directories[directory]
+          @directories[directory] = true
+          puts directory
         end
       else
-        puts photo.filename
+        puts file
       end
     end
   end
