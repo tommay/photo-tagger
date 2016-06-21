@@ -217,6 +217,11 @@ class Viewer
         next_photo
       when Gdk::Keyval::KEY_Delete
         delete_file
+      when Gdk::Keyval::KEY_d
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          switch_to_from_deleted_directory
+          true
+        end
       when Gdk::Keyval::KEY_z
         if event.state == Gdk::ModifierType::CONTROL_MASK
           undelete_file
@@ -397,19 +402,34 @@ class Viewer
   def delete_file
     photo_filename = @photo.filename
     photo_dirname = File.dirname(photo_filename)
-    deleted_dirname = File.join(photo_dirname, ".deleted")
-    begin
-      Dir.mkdir(deleted_dirname)
-    rescue Errno::EEXIST => ex
-    end
-    File.basename(photo_filename) =~ /^([^.]+)/
-    base = $1
+
+    # If we're not in a .deleted directory, then delete by creating
+    # and renaming to a .deleted subdirectory.  If we're in a .deleted
+    # directory, then delete by renaming/restoring to the parent
+    # directory.
+
+    deleted_dirname =
+      if File.basename(photo_dirname) != ".deleted"
+        File.join(photo_dirname, ".deleted").tap do |dir|
+          if !File.exist?(dir)
+            Dir.mkdir(dir)
+          end
+        end
+      else
+        File.dirname(photo_dirname)
+      end
 
     # Remember the last file deleted for crufty undelete.
 
     @deleted_filename = @filenames[@nfile]
     @deleted_nfile = @nfile
     @deleted_files = []
+
+    # Delete everything with the same basename regardless of suffix.
+
+    File.basename(photo_filename) =~ /^(.*)\./
+    base = $1 || photo_filename
+
     Dir[File.join(photo_dirname, "#{base}.*")].each do |n|
       deleted = File.join(deleted_dirname, File.basename(n))
       File.rename(n, deleted)
@@ -438,6 +458,19 @@ class Viewer
       @filenames.insert(@nfile, @deleted_filename)
 
       load_photo(@filenames[@nfile])
+    end
+  end
+
+  def switch_to_from_deleted_directory
+    directory = @photo.directory
+    if File.basename(directory) == ".deleted"
+      parent = File.dirname(directory)
+      set_filename(parent)
+    else
+      deleted_directory = File.join(directory, ".deleted")
+      if File.exist?(deleted_directory)
+        set_filename(deleted_directory)
+      end
     end
   end
 
