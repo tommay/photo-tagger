@@ -346,6 +346,9 @@ class Viewer
       width_ratio = image_width.to_f / pixbuf_width
       height_ratio = image_height.to_f / pixbuf_height
       ratio = width_ratio < height_ratio ? width_ratio : height_ratio
+      if ratio > 1
+        ratio = 1
+      end
       scaled = @pixbuf.scale(pixbuf_width * ratio, pixbuf_height * ratio)
       image.set_pixbuf(scaled)
     end
