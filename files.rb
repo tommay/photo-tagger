@@ -12,7 +12,7 @@ module Files
   def self.for_directory(dirname)
     Dir[dirname ? File.join(dirname, "*") : "*"].select do |filename|
       image_file?(filename)
-    end
+    end.sort
   end
 
   def self.image_files(filename, recurse)
