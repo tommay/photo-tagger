@@ -7,7 +7,7 @@ class EntryDialog
       flags: Gtk::DialogFlags::DESTROY_WITH_PARENT,
       buttons: [
         ["Ok", Gtk::ResponseType::ACCEPT],
-        ["No so ok", Gtk::ResponseType::REJECT]])
+        ["Not so ok", Gtk::ResponseType::REJECT]])
 
     entry = Gtk::Entry.new.tap do |o|
       o.text = text
