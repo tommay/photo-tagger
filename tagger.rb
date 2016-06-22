@@ -18,20 +18,21 @@ class Viewer
   end
 
   def set_filename(filename)
+    realpath = Pathname.new(filename).realpath.to_s
     case
-    when !filename || File.directory?(filename)
-      @filenames = Files.for_directory(filename)
+    when File.directory?(realpath)
+      @directory = realpath
+      @filenames = Files.for_directory(realpath)
       @nfile = 0
-    when File.exist?(filename)
-      # If filename has a path set dirname to its directory, else to nil.
-      if filename =~ /#{Regexp.quote(File::SEPARATOR)}/
-        dirname = File.dirname(filename)
-      end
-      @filenames = Files.for_directory(dirname)
-      @nfile = @filenames.find_index(filename)
+    when File.exist?(realpath)
+      @directory = File.dirname(realpath)
+      @filenames = Files.for_directory(@directory)
+      @nfile = @filenames.find_index(realpath)
     else
-      puts "#{filename} not found"
-      exit(1)
+      # XXX
+      raise "Ugh."
+      @filenames = []
+      @nfile = 0
     end
 
     load_photo(@filenames[@nfile])
@@ -255,21 +256,25 @@ class Viewer
           true
         end
       when Gdk::Keyval::KEY_comma
-        tags = @photo.tags.map {|t| t.tag}
-        @photo.tags.clear
-        @recent.older(tags).each do |t|
-          @photo.add_tag(t)
+        if @photo
+          tags = @photo.tags.map {|t| t.tag}
+          @photo.tags.clear
+          @recent.older(tags).each do |t|
+            @photo.add_tag(t)
+          end
+          @photo.save
+          load_applied_tags
         end
-        @photo.save
-        load_applied_tags
       when Gdk::Keyval::KEY_period
-        tags = @photo.tags.map {|t| t.tag}
-        @photo.tags.clear
-        @recent.newer(tags).each do |t|
-          @photo.add_tag(t)
+        if @photo
+          tags = @photo.tags.map {|t| t.tag}
+          @photo.tags.clear
+          @recent.newer(tags).each do |t|
+            @photo.add_tag(t)
+          end
+          @photo.save
+          load_applied_tags
         end
-        @photo.save
-        load_applied_tags
       end
     end
 
@@ -300,11 +305,13 @@ class Viewer
   end
 
   def next_photo(delta = 1)
-    save_recent_tags
-    if @filenames.size > 0
-      @nfile = (@nfile + delta) % @filenames.size
+    if @photo
+      save_recent_tags
+      if @filenames.size > 0
+        @nfile = (@nfile + delta) % @filenames.size
+      end
+      load_photo(@filenames[@nfile])
     end
-    load_photo(@filenames[@nfile])
   end
 
   def prev_photo
@@ -312,10 +319,9 @@ class Viewer
   end
 
   def next_directory(delta = 1)
-    current = @photo.directory
-    parent = File.dirname(current)
+    parent = File.dirname(@directory)
     siblings = Dir[File.join(parent, "*")].select{|x| File.directory?(x)}.sort
-    index = siblings.index(current)
+    index = siblings.index(@directory)
     if index
       index += delta
       if index >= 0 && index < siblings.size
@@ -329,7 +335,7 @@ class Viewer
   end
 
   def show_filename
-    @window.title = "Viewer: #{@photo && @photo.filename}"
+    @window.title = "Viewer: #{@photo ? @photo.filename : @directory}"
   end
 
   def show_photo
@@ -362,7 +368,7 @@ class Viewer
   end
 
   def add_tag(string)
-    if @photo.add_tag(string)
+    if @photo && @photo.add_tag(string)
       load_applied_tags
       add_available_tag(string)
       load_directory_tags
@@ -370,7 +376,7 @@ class Viewer
   end
 
   def remove_tag(string)
-    if @photo.remove_tag(string)
+    if @photo && @photo.remove_tag(string)
       load_applied_tags
       load_directory_tags
     end
@@ -378,8 +384,10 @@ class Viewer
 
   def load_applied_tags
     @applied_tags_list.clear
-    @photo.tags.each do |tag|
-      @applied_tags_list.append[0] = tag.tag
+    if @photo
+      @photo.tags.each do |tag|
+        @applied_tags_list.append[0] = tag.tag
+      end
     end
   end
 
@@ -406,16 +414,16 @@ class Viewer
 
   def load_directory_tags
     @directory_tags_list.clear
-    if @photo
-      Photo.all(directory: @photo.directory).tags.each do |tag|
-        @directory_tags_list.append[0] = tag.tag
-      end
+    Photo.all(directory: @directory).tags.each do |tag|
+      @directory_tags_list.append[0] = tag.tag
     end
   end
 
   # XXX Wow this is ugly.
   #
   def delete_file
+    return if !@photo
+
     photo_filename = @photo.filename
     photo_dirname = File.dirname(photo_filename)
 
@@ -452,8 +460,6 @@ class Viewer
       @deleted_files << [n, deleted]
     end
 
-    # XXX handle when there is no next.
-
     @filenames.delete_at(@nfile)
     if @nfile >= @filenames.size
       @nfile -= 1
@@ -478,12 +484,11 @@ class Viewer
   end
 
   def switch_to_from_deleted_directory
-    directory = @photo.directory
-    if File.basename(directory) == ".deleted"
-      parent = File.dirname(directory)
+    if File.basename(@directory) == ".deleted"
+      parent = File.dirname(@directory)
       set_filename(parent)
     else
-      deleted_directory = File.join(directory, ".deleted")
+      deleted_directory = File.join(@directory, ".deleted")
       if File.exist?(deleted_directory)
         set_filename(deleted_directory)
       end
@@ -493,8 +498,8 @@ class Viewer
   def rename_directory_dialog
     EntryDialog.new(
       title: "Rename Directory", parent: @window,
-      text: @photo.directory,
-      width_chars: @photo.directory.size + 20) do |text|
+      text: @directory,
+      width_chars: @directory.size + 20) do |text|
       begin
         rename_photos_directory(text)
       rescue => ex
@@ -510,14 +515,14 @@ class Viewer
     end
   end
 
-  # XXX Ths breaks deleted files.
+  # XXX This breaks deleted files.
   def rename_photos_directory(new_directory)
     if File.exist?(new_directory)
       raise "#{new_directory} already exists"
     end
-    File.rename(@photo.directory, new_directory)
+    File.rename(@directory, new_directory)
 
-    Photo.all(directory: @photo.directory).each do |photo|
+    Photo.all(directory: @directory).each do |photo|
       photo.directory = new_directory
       photo.save
     end
@@ -527,7 +532,7 @@ class Viewer
 
   def save_last
     if @photo
-      last = Last.first_or_new(directory: @photo.directory)
+      last = Last.first_or_new(directory: @directory)
       last.filename = @photo.filename
       last.save
     end
