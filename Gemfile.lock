@@ -93,6 +93,7 @@ GEM
       cairo (>= 1.14.0)
       glib2 (= 3.0.8)
     pkg-config (1.1.7)
+    pratt_parser (0.1.2)
     stringex (1.5.1)
     trollop (2.1.2)
     uuidtools (2.1.5)
@@ -107,6 +108,7 @@ DEPENDENCIES
   exiv2
   gtk3
   nokogiri
+  pratt_parser
   trollop
 
 BUNDLED WITH

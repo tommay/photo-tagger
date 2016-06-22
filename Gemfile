@@ -6,6 +6,7 @@ gem "dm-sqlite-adapter"
 gem "nokogiri"
 gem "trollop"
 gem "exiv2"
+gem "pratt_parser"
 
 group :development do
   gem "byebug"
