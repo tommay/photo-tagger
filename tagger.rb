@@ -412,8 +412,18 @@ class Viewer
   end
 
   def add_available_tag(tag)
-    if !@available_tags_list.include?(tag)
+    if enumerator_for(@available_tags_list).none?{|item| item[0] == tag}
       @available_tags_list.append[0] = tag
+    end
+  end
+
+  def enumerator_for(list_store)
+    # XXX Make sure list_store is not empty.
+    Enumerator.new do |y|
+      iter = list_store.iter_first
+      begin
+        y << iter
+      end while iter.next!
     end
   end
 
