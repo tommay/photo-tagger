@@ -40,7 +40,9 @@ class Viewer
   # The tag TreeViews are all nearly the same, so create them here.
   #
   def create_treeview(name)
-    tags_list = Gtk::ListStore.new(String)
+    tags_list = Gtk::ListStore.new(String).tap do |o|
+      o.set_sort_column_id(0, Gtk::SortType::ASCENDING)
+    end
     tags_view = Gtk::TreeView.new(tags_list).tap do |o|
       o.headers_visible = false
       o.enable_search = false
@@ -362,7 +364,7 @@ class Viewer
   def add_tag(string)
     if @photo.add_tag(string)
       load_applied_tags
-      load_available_tags
+      add_available_tag(string)
       load_directory_tags
     end
   end
@@ -382,9 +384,23 @@ class Viewer
   end
 
   def load_available_tags
-    @available_tags_list.clear
-    Tag.all.each do |tag|
-      @available_tags_list.append[0] = tag.tag
+    # Disable sorting while the list is loaded.
+    sort_column_id = @available_tags_list.sort_column_id[1,2]
+    begin
+      #@available_tags_list.set_sort_column_id(-1, :ascending)
+      #@available_tags_list.set_default_sort_func{-1}
+      @available_tags_list.clear
+      Tag.all.each do |tag|
+        @available_tags_list.append[0] = tag.tag
+      end
+    ensure
+      #@available_tags_list.set_sort_column_id(*sort_column_id)
+    end
+  end
+
+  def add_available_tag(tag)
+    if !@available_tags_list.include?(tag)
+      @available_tags_list.append[0] = tag
     end
   end
 
