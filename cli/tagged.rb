@@ -2,6 +2,7 @@
 
 require "bundler/setup"
 require "trollop"
+require "strscan"
 require "pratt_parser"
 require "byebug"
 require_relative "../model"
@@ -12,6 +13,7 @@ options = Trollop::options do
   opt :null, "Same as --nul"
   opt :tags, "Show files' tags"
   opt :ugly, "Show files' tags in tag -a ... format"
+  opt :expr, "Expression to search for", type: String
   conflicts :nul, :tags, :ugly
   conflicts :null, :tags, :ugly
   stop_on_unknown
@@ -31,26 +33,39 @@ class Lexer
   #  +
   #  (
   #  )
-  # where tag and date are strings of non-blanks.  We split the
-  # expression on delimiters and whitespace.  The delimiters are
-  # returned as part of the token list, whitespace is discarded.  Note
-  # that "-" is not a delimiter, since we want to use it as part of
-  # dates like "2016-04-01".  But -tag returns two tokens: AndNotToken
-  # which is an operator, and LikeTagToken(tag).  AndToken is
-  # generated between two data tokens that don't have an explicit
-  # operator (+ or -) between them.  All operators have the same
-  # precedence and are left-associative.
+  # where tag is a string of non-blanks or delimited by double quotes
+  # and date is a string of digits and dashes, any prefix of
+  # yyyy-mm-dd.  TOKENS matches each token in the expression.  -tag
+  # yields two tokens: AndNotToken which is an operator, and
+  # LikeTagToken(tag).  AndToken is generated automatically between
+  # two tag or date tokens that don't have an explicit operator (+ or
+  # -) between them.  All operators have the same precedence and are
+  # left-associative.
+  #
+  # None of this scanning stuff is pretty but I blame it on my desire
+  # to support command lines like "tagged max boots" to find photos
+  # tagged with both "max" and "boots", and "tagged 'max boots'" to
+  # find photos with the single tag "max boots".  And also to allow
+  # "tagged max -boots" to find photos tagged with "max' but not with
+  # "boots".
+  #
+  # XXX This is still crap because the expression " will be handled as
+  # a tag.
 
-  SPLIT = %r{([+()])|\s+}
+  TOKENS = /[+()]|[<>=][0-9\-]+|-?"([^"]*)"|-?[^\s]+|\s+/
 
   # Note that new is overwritten to return an Enumerator, not a Lexer.
 
   def self.new(expression)
-    tokens = expression.split(SPLIT).reject{|x| x == ""}
+    scanner = StringScanner.new(expression)
     need_and = false
     Enumerator.new do |y|
-      tokens.each do |token|
-        case token
+      while !scanner.eos?
+        case scanner.scan(TOKENS)
+        when nil
+          raise "scan error at #{scanner.rest}"
+        when /^\s+$/
+          # Ignore whitespace.
         when "("
           y << LeftParenToken.new
           need_and = false
@@ -60,25 +75,25 @@ class Lexer
         when "+"
           y << PlusToken.new
           need_and = false
-        when /=(.*)/
+        when /^=(.*)/
           y << AndToken.new if need_and
           y << LikeDateToken.new($1)
           need_and = true
-        when /<(.*)/
+        when /^<(.*)/
           y << AndToken.new if need_and
           y << BeforeDateToken.new($1)
           need_and = true
-        when />(.*)/
+        when /^>(.*)/
           y << AndToken.new if need_and
           y << AfterDateToken.new($1)
           need_and = true
-        when /-(.*)/
+        when /^-"(.*)"/, /^-(.*)/
           y << ButNotToken.new
           y << LikeTagToken.new($1)
           need_and = true
-        else
+        when /^"(.*)"/, /^(.*)/
           y << AndToken.new if need_and
-          y << LikeTagToken.new(token)
+          y << LikeTagToken.new($1)
           need_and = true
         end
       end
@@ -168,7 +183,17 @@ class Lexer
   end
 end
 
-expression = ARGV.join(" ")
+expression = options.expr || ARGV.map do |arg|
+  case arg
+  when /^[<>=]/
+    arg
+  when /^-(.*)/
+    "-\"#{$1}\""
+  else
+    "\"#{arg}\""
+  end
+end.join(" ")
+
 photos = PrattParser.new(Lexer.new(expression)).eval
 
 def quote(s)
