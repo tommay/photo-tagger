@@ -40,9 +40,11 @@ class Viewer
 
   # The tag TreeViews are all nearly the same, so create them here.
   #
-  def create_treeview(name)
+  def create_treeview(name, sorted: true)
     tags_list = Gtk::ListStore.new(String).tap do |o|
-      o.set_sort_column_id(0, Gtk::SortType::ASCENDING)
+      if sorted
+        o.set_sort_column_id(0, Gtk::SortType::ASCENDING)
+      end
     end
     tags_view = Gtk::TreeView.new(tags_list).tap do |o|
       o.headers_visible = false
@@ -70,7 +72,12 @@ class Viewer
     # Create the widgets we actually care about and save in instance
     # variables and use.  Then lay them out.
 
-    @applied_tags_list, @applied_tags = create_treeview("Applied tags")
+    # Applied tags aren't sorted.  It's more intuitive to leave them
+    # in the order they're added at first.  XXX might want to add a column
+    # to photo_tags for this.
+
+    @applied_tags_list, @applied_tags =
+      create_treeview("Applied tags", sorted: false)
     @applied_tags.headers_visible = true
 
     @available_tags_list, @available_tags = create_treeview("Available tags")
