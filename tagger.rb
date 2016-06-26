@@ -261,25 +261,19 @@ class Viewer
           true
         end
       when Gdk::Keyval::KEY_comma
-        if @photo
-          tags = @photo.tags.map {|t| t.tag}
-          @photo.tags.clear
-          @recent.older(tags).each do |t|
-            @photo.add_tag(t)
-          end
-          @photo.save
-          load_applied_tags
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          rotate_left
+        else
+          use_recent_tags(:older)
         end
+        true
       when Gdk::Keyval::KEY_period
-        if @photo
-          tags = @photo.tags.map {|t| t.tag}
-          @photo.tags.clear
-          @recent.newer(tags).each do |t|
-            @photo.add_tag(t)
-          end
-          @photo.save
-          load_applied_tags
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          rotate_right
+        else
+          use_recent_tags(:newer)
         end
+        true
       end
     end
 
@@ -307,6 +301,18 @@ class Viewer
       t.tag
     end
     @recent.add(tags)
+  end
+
+  def use_recent_tags(older_or_newer)
+    if @photo
+      tags = @photo.tags.map {|t| t.tag}
+      @photo.tags.clear
+      @recent.send(older_or_newer, tags).each do |t|
+        @photo.add_tag(t)
+      end
+      @photo.save
+      load_applied_tags
+    end
   end
 
   def next_photo(delta = 1)
@@ -546,13 +552,13 @@ class Viewer
     set_filename(File.join(new_directory, @photo.basename))
   end
 
-  def crop_6mm
+  def transform(&block)
     return if !@photo
     return if File.basename(@directory) == ".deleted"
 
-    # Losslessly crop and create a .bak file.
+    # Transform the file, and create a .bak file.
 
-    system("/usr/bin/env", "6mm", @photo.filename)
+    block.call
 
     # Move the .bak file to .deleted with the original filename.  This
     # makes it look like we deleted the file.
@@ -573,9 +579,29 @@ class Viewer
     @photo.set_sha1
     @photo.save
 
-    # Show the cropped photo.
+    # Show the transforned photo.
 
     load_photo(@filenames[@nfile])
+  end
+
+  def crop_6mm
+    # Losslessly crop and create a .bak file.
+
+    transform do
+      system("/usr/bin/env", "6mm", @photo.filename)
+    end
+  end
+
+  def rotate_left
+    transform do
+      system("/usr/bin/env", "jrot", "-l", @photo.filename)
+    end
+  end
+
+  def rotate_right
+    transform do
+      system("/usr/bin/env", "jrot", "-r", @photo.filename)
+    end
   end
 
   def create_deleted_dir(directory)
