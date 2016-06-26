@@ -6,36 +6,21 @@ require "byebug"
 
 require_relative "model"
 require_relative "files"
+require_relative "file_list"
 require_relative "importer"
 require_relative "savelist"
 require_relative "entry_dialog"
 
 class Viewer
-  def initialize(filename)
+  def initialize(args)
     init_ui
-    set_filename(filename)
     @recent = SaveList.new([])
+    set_filename(args)
   end
 
   def set_filename(filename)
-    realpath = Pathname.new(filename).realpath.to_s
-    case
-    when File.directory?(realpath)
-      @directory = realpath
-      @filenames = Files.for_directory(realpath)
-      @nfile = 0
-    when File.exist?(realpath)
-      @directory = File.dirname(realpath)
-      @filenames = Files.for_directory(@directory)
-      @nfile = @filenames.find_index(realpath)
-    else
-      # XXX
-      raise "Ugh."
-      @filenames = []
-      @nfile = 0
-    end
-
-    load_photo(@filenames[@nfile])
+    @file_list = FileList.new(filename)
+    load_photo(@file_list.current)
   end
 
   # The tag TreeViews are all nearly the same, so create them here.
@@ -325,10 +310,7 @@ class Viewer
   def next_photo(delta = 1)
     if @photo
       save_recent_tags
-      if @filenames.size > 0
-        @nfile = (@nfile + delta) % @filenames.size
-      end
-      load_photo(@filenames[@nfile])
+      load_photo(@file_list.next(delta))
     end
   end
 
@@ -337,9 +319,9 @@ class Viewer
   end
 
   def next_directory(delta = 1)
-    parent = File.dirname(@directory)
+    parent = File.dirname(@file_list.directory)
     siblings = Dir[File.join(parent, "*")].select{|x| File.directory?(x)}.sort
-    index = siblings.index(@directory)
+    index = siblings.index(@file_list.directory)
     if index
       index += delta
       if index >= 0 && index < siblings.size
@@ -353,7 +335,7 @@ class Viewer
   end
 
   def show_filename
-    @window.title = "Viewer: #{@photo ? @photo.filename : @directory}"
+    @window.title = "Viewer: #{@photo ? @photo.filename : @file_list.directory}"
   end
 
   def show_photo
@@ -442,7 +424,7 @@ class Viewer
 
   def load_directory_tags
     @directory_tags_list.clear
-    Photo.all(directory: @directory).tags.each do |tag|
+    Photo.all(directory: @file_list.directory).tags.each do |tag|
       @directory_tags_list.append[0] = tag.tag
     end
   end
@@ -458,41 +440,39 @@ class Viewer
     # directory.
 
     deleted_dirname =
-      if File.basename(@directory) != ".deleted"
-        create_deleted_dir(@directory)
+      if File.basename(@file_list.directory) != ".deleted"
+        create_deleted_dir(@file_list.directory)
       else
-        File.dirname(@directory)
+        File.dirname(@file_list.directory)
       end
 
-    # Remember the last file deleted for crufty undelete.
+    # Remember all the "deleted" files fir crufty undelete.
 
-    @deleted_filename = @filenames[@nfile]
-    @deleted_nfile = @nfile
     @deleted_files = []
 
     # Delete everything with the same basename regardless of suffix.
 
-    File.basename(@photo.filename) =~ /^(.*)\./
-    base = $1 || @photo.filename
+    @photo.basename =~ /^(.*)\./
+    base = $1 || @photo.basename
 
-    Dir[File.join(@directory, "#{base}.*")].each do |n|
+    Dir[File.join(@file_list.directory, "#{base}.*")].each do |n|
       deleted = File.join(deleted_dirname, File.basename(n))
       File.rename(n, deleted)
       @deleted_files << [n, deleted]
     end
 
-    @filenames.delete_at(@nfile)
-    if @nfile >= @filenames.size
-      @nfile -= 1
-    end
+    # Delete from files_list and remember the last file deleted for
+    # crufty undelete.
 
-    load_photo(@filenames[@nfile])
+    @deleted = @file_list.delete_current
+
+    load_photo(@file_list.current)
   end
 
   # XXX this is super-crufty.
   #
   def undelete_file
-    if @deleted_files
+    if @deleted
       @deleted_files.each do |name, deleted|
         File.rename(deleted, name)
         # If there is a database entry for this file then make sure
@@ -505,25 +485,21 @@ class Viewer
       end
       @deleted_files = nil
 
-      @nfile = @deleted_nfile
+      # XXX It would be cleaner just to do set_filename and have it
+      # reload the directory.  It should be performant.
 
-      # Insert @deleted_filename into #filenames unless it's already there,
-      # e.g., we rotated the file and are restoring it.
+      @file_list.undelete(@deleted)
 
-      if @filenames[@nfile] != @deleted_filename
-        @filenames.insert(@nfile, @deleted_filename)
-      end
-
-      load_photo(@filenames[@nfile])
+      load_photo(@file_list.current)
     end
   end
 
   def switch_to_from_deleted_directory
-    if File.basename(@directory) == ".deleted"
-      parent = File.dirname(@directory)
+    if File.basename(@file_list.directory) == ".deleted"
+      parent = File.dirname(@file_list.directory)
       set_filename(parent)
     else
-      deleted_directory = File.join(@directory, ".deleted")
+      deleted_directory = File.join(@file_list.directory, ".deleted")
       if File.exist?(deleted_directory)
         set_filename(deleted_directory)
       end
@@ -533,8 +509,8 @@ class Viewer
   def rename_directory_dialog
     EntryDialog.new(
       title: "Rename Directory", parent: @window,
-      text: @directory,
-      width_chars: @directory.size + 20) do |text|
+      text: @file_list.directory,
+      width_chars: @file_list.directory.size + 20) do |text|
       begin
         rename_photos_directory(text)
       rescue => ex
@@ -555,9 +531,9 @@ class Viewer
     if File.exist?(new_directory)
       raise "#{new_directory} already exists"
     end
-    File.rename(@directory, new_directory)
+    File.rename(@file_list.directory, new_directory)
 
-    Photo.all(directory: @directory).each do |photo|
+    Photo.all(directory: @file_list.directory).each do |photo|
       photo.directory = new_directory
       photo.save
     end
@@ -567,7 +543,7 @@ class Viewer
 
   def transform(&block)
     return if !@photo
-    return if File.basename(@directory) == ".deleted"
+    return if File.basename(@file_list.directory) == ".deleted"
 
     # Transform the file, and create a .bak file.
 
@@ -584,22 +560,20 @@ class Viewer
     # allows multiple rotations to be undone by restoring the original
     # backup.
 
-    deleted_dirname = create_deleted_dir(@directory)
-    deleted_filename = File.join(
-      deleted_dirname, File.basename(@photo.filename))
+    deleted_dirname = create_deleted_dir(@file_list.directory)
+    deleted_filename = File.join(deleted_dirname, @photo.basename)
     if !File.exist?(deleted_filename)
       File.rename("#{@photo.filename}.bak", deleted_filename)
     end
 
     # Set things up so the file can be restored with undelete.
 
-    @deleted_filename = @filenames[@nfile]
-    @deleted_nfile = @nfile
+    @deleted = @file_list.fake_delete_current
     @deleted_files = [[@photo.filename, deleted_filename]]
 
-    # Show the transforned photo.
+    # Show the transformed photo.
 
-    load_photo(@filenames[@nfile])
+    load_photo(@file_list.current)
   end
 
   def crop_6mm
@@ -632,7 +606,7 @@ class Viewer
 
   def save_last
     if @photo
-      last = Last.first_or_new(directory: @directory)
+      last = Last.first_or_new(directory: @file_list.directory)
       last.filename = @photo.filename
       last.save
     end
@@ -652,7 +626,5 @@ class Viewer
   end
 end
 
-# ARGV[0] might be nil, in which case we'll show the image files in
-# the current directory without "./" in their path.
-Viewer.new(ARGV[0])
+Viewer.new(ARGV)
 Gtk.main
