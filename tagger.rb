@@ -499,7 +499,13 @@ class Viewer
       @deleted_files = nil
 
       @nfile = @deleted_nfile
-      @filenames.insert(@nfile, @deleted_filename)
+
+      # Insert @deleted_filename into #filenames unless it's already there,
+      # e.g., we rotated the file and are restoring it.
+
+      if @filenames[@nfile] != @deleted_filename
+        @filenames.insert(@nfile, @deleted_filename)
+      end
 
       load_photo(@filenames[@nfile])
     end
@@ -560,24 +566,29 @@ class Viewer
 
     block.call
 
+    # Update the sha1.
+
+    @photo.set_sha1
+    @photo.save
+
     # Move the .bak file to .deleted with the original filename.  This
-    # makes it look like we deleted the file.
+    # makes it look like we deleted the file.  Unless there is already
+    # an existing "deleted" file, in qhich case just leave it.  This
+    # allows multiple rotations to be undone by restoring the original
+    # backup.
 
     deleted_dirname = create_deleted_dir(@directory)
     deleted_filename = File.join(
       deleted_dirname, File.basename(@photo.filename))
-    File.rename("#{@photo.filename}.bak", deleted_filename)
+    if !File.exist?(deleted_filename)
+      File.rename("#{@photo.filename}.bak", deleted_filename)
+    end
 
     # Set things up so the file can be restored with undelete.
 
     @deleted_filename = @filenames[@nfile]
     @deleted_nfile = @nfile
     @deleted_files = [[@photo.filename, deleted_filename]]
-
-    # Update the sha1.
-
-    @photo.set_sha1
-    @photo.save
 
     # Show the transforned photo.
 
