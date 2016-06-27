@@ -413,12 +413,11 @@ class Viewer
   end
 
   def enumerator_for(list_store)
-    # XXX Make sure list_store is not empty.
     Enumerator.new do |y|
-      iter = list_store.iter_first
-      begin
-        y << iter
-      end while iter.next!
+      # If list_store is empty, iter will be nil.
+      if iter = list_store.iter_first
+        y << iter while iter.next!
+      end
     end
   end
 
