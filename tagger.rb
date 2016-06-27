@@ -5,6 +5,7 @@ require "gtk3"
 require "byebug"
 
 require_relative "model"
+require_relative "photo_window"
 require_relative "files"
 require_relative "file_list"
 require_relative "importer"
@@ -55,7 +56,7 @@ class Viewer
     #  false
     #end
 
-    @image = Gtk::Image.new
+    @photo_window = PhotoWindow.new
 
     # Widget layout.  The tag TreeViews get wrapped in ScrolledWindows
     # and put into a Paned.  @tag_entry goes into a Box with
@@ -108,26 +109,7 @@ class Viewer
     box = Gtk::Box.new(:horizontal)
     box.pack_start(paned, expand: false)
 
-    # Put @image into an event box so it can get mouse clicks and
-    # drags.
-
-    @image.set_size_request(400, 400)
-    event_box = Gtk::EventBox.new
-    event_box.add(@image)
-    box.pack_start(event_box, expand: true, fill: true)
-
-    x = 0
-    y = 0
-    event_box.signal_connect("button-press-event") do |widget, event|
-      puts "button-press-event"
-      x = event.x
-      y = event.y
-      false
-    end
-    event_box.signal_connect("motion-notify-event") do |widget, event|
-      puts "motion-notify-event #{event.x - x} #{event.y - y}"
-      false
-    end
+    box.pack_start(@photo_window.get_widget, expand: true, fill: true)
 
     # Finally, the top-level window.
 
@@ -138,12 +120,6 @@ class Viewer
       o.position = :center
     end
     @window.add(box)
-
-    @image.signal_connect("size-allocate") do |widget, rectangle|
-      if @pixbuf
-        show_scaled_image(@scale, @image, @pixbuf)
-      end
-    end
 
     @tag_entry.signal_connect("activate") do |widget|
       tag = widget.text.strip
@@ -352,44 +328,7 @@ class Viewer
   end
 
   def show_photo
-    if @photo
-      @pixbuf = Gdk::Pixbuf.new(file: @photo.filename)
-      show_scaled_image(@scale, @image, @pixbuf)
-    else
-      @image.set_pixbuf(nil)
-    end
-  end
-
-  def show_scaled_image(scale, image, pixbuf)
-    scale ||= :fit
-
-    if scale == :fit
-      scale = compute_scale_to_fit(image, pixbuf)
-    end
-
-    if scale != @last_scale || pixbuf != @last_pixbuf
-      @last_scale = scale
-      @last_pixbuf = pixbuf
-
-      scaled = @pixbuf.scale(pixbuf.width * scale, pixbuf.height * scale)
-      image.set_pixbuf(scaled)
-    end
-  end
-
-  def compute_scale_to_fit(image, pixbuf)
-    image_width = image.allocated_width
-    pixbuf_width = pixbuf.width
-    width_scale = image_width.to_f / pixbuf_width
-
-    image_height = image.allocated_height
-    pixbuf_height = pixbuf.height
-    height_scale = image_height.to_f / pixbuf_height
-
-    scale = width_scale < height_scale ? width_scale : height_scale
-    if scale > 1
-      scale = 1
-    end
-    scale
+    @photo_window.show_photo(@photo && @photo.filename)
   end
 
   def add_tag(string)
