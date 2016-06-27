@@ -115,7 +115,7 @@ class Viewer
     event_box = Gtk::EventBox.new
     event_box.add(@image)
     box.pack_start(event_box, expand: true, fill: true)
-#    event_box.signal_connect("button_press_event") do
+#    event_box.signal_connect("button-press-event") do
 #      puts "Clicked."
 #    end
 
@@ -168,7 +168,7 @@ class Viewer
 
     load_available_tags
 
-    @window.signal_connect("key_press_event") do |widget, event|
+    @window.signal_connect("key-press-event") do |widget, event|
       # Gdk::Keyval.to_name(event.keyval)
       case event.keyval
       when Gdk::Keyval::KEY_Left
@@ -243,7 +243,7 @@ class Viewer
     @window.show_all
   end
 
- # The tag TreeViews are all nearly the same, so create them here.
+  # The tag TreeViews are all nearly the same, so create them here.
   #
   def create_treeview(name, sorted: true)
     tags_list = Gtk::ListStore.new(String).tap do |o|
