@@ -18,41 +18,6 @@ class Viewer
     set_filename(args)
   end
 
-  def set_filename(filename)
-    @file_list = FileList.new(filename)
-    load_photo(@file_list.current)
-  end
-
-  # The tag TreeViews are all nearly the same, so create them here.
-  #
-  def create_treeview(name, sorted: true)
-    tags_list = Gtk::ListStore.new(String).tap do |o|
-      if sorted
-        o.set_sort_column_id(0, Gtk::SortType::ASCENDING)
-      end
-    end
-    tags_view = Gtk::TreeView.new(tags_list).tap do |o|
-      o.headers_visible = false
-      o.enable_search = false
-      o.selection.mode = Gtk::SelectionMode::NONE
-      renderer = Gtk::CellRendererText.new
-      # Fixed text property:
-      # renderer.set_text("blah")
-      # renderer.set_property("text", "blah")
-      column = Gtk::TreeViewColumn.new("Applied tags", renderer).tap do |o|
-        # Get text from column 0 of the model:
-        o.add_attribute(renderer, "text", 0)
-        # Use a block to set/unset dynamically computed properties on
-        # the renderer:
-        # o.set_cell_data_func(renderer) do |tree_view_column, renderer, model, iter|
-        #  renderer.set_text("wow")
-        #  end
-      end
-      o.append_column(column)
-    end
-    [tags_list, tags_view]
-  end
-
   def init_ui
     # Create the widgets we actually care about and save in instance
     # variables and use.  Then lay them out.
@@ -276,6 +241,41 @@ class Viewer
 
     #@window.maximize
     @window.show_all
+  end
+
+ # The tag TreeViews are all nearly the same, so create them here.
+  #
+  def create_treeview(name, sorted: true)
+    tags_list = Gtk::ListStore.new(String).tap do |o|
+      if sorted
+        o.set_sort_column_id(0, Gtk::SortType::ASCENDING)
+      end
+    end
+    tags_view = Gtk::TreeView.new(tags_list).tap do |o|
+      o.headers_visible = false
+      o.enable_search = false
+      o.selection.mode = Gtk::SelectionMode::NONE
+      renderer = Gtk::CellRendererText.new
+      # Fixed text property:
+      # renderer.set_text("blah")
+      # renderer.set_property("text", "blah")
+      column = Gtk::TreeViewColumn.new("Applied tags", renderer).tap do |o|
+        # Get text from column 0 of the model:
+        o.add_attribute(renderer, "text", 0)
+        # Use a block to set/unset dynamically computed properties on
+        # the renderer:
+        # o.set_cell_data_func(renderer) do |tree_view_column, renderer, model, iter|
+        #  renderer.set_text("wow")
+        #  end
+      end
+      o.append_column(column)
+    end
+    [tags_list, tags_view]
+  end
+
+  def set_filename(filename)
+    @file_list = FileList.new(filename)
+    load_photo(@file_list.current)
   end
 
   def load_photo(filename)
