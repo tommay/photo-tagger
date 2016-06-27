@@ -131,7 +131,7 @@ class Viewer
 
     @image.signal_connect("size-allocate") do |widget, rectangle|
       if @pixbuf
-        show_scaled_image(@image, @pixbuf)
+        show_scaled_image(@scale, @image, @pixbuf)
       end
     end
 
@@ -344,30 +344,42 @@ class Viewer
   def show_photo
     if @photo
       @pixbuf = Gdk::Pixbuf.new(file: @photo.filename)
-      show_scaled_image(@image, @pixbuf)
+      show_scaled_image(@scale, @image, @pixbuf)
     else
       @image.set_pixbuf(nil)
     end
   end
 
-  def show_scaled_image(image, pixbuf)
-    image_width = image.allocated_width
-    image_height = image.allocated_height
-    if !@last_image_size || @last_image_size != [image_width, image_height] ||
-       @last_pixbuf != pixbuf
-      @last_image_size = [image_width, image_height]
+  def show_scaled_image(scale, image, pixbuf)
+    scale ||= :fit
+
+    if scale == :fit
+      scale = compute_scale_to_fit(image, pixbuf)
+    end
+
+    if scale != @last_scale || pixbuf != @last_pixbuf
+      @last_scale = scale
       @last_pixbuf = pixbuf
-      pixbuf_width = pixbuf.width
-      pixbuf_height = pixbuf.height
-      width_ratio = image_width.to_f / pixbuf_width
-      height_ratio = image_height.to_f / pixbuf_height
-      ratio = width_ratio < height_ratio ? width_ratio : height_ratio
-      if ratio > 1
-        ratio = 1
-      end
-      scaled = @pixbuf.scale(pixbuf_width * ratio, pixbuf_height * ratio)
+
+      scaled = @pixbuf.scale(pixbuf.width * scale, pixbuf.height * scale)
       image.set_pixbuf(scaled)
     end
+  end
+
+  def compute_scale_to_fit(image, pixbuf)
+    image_width = image.allocated_width
+    pixbuf_width = pixbuf.width
+    width_scale = image_width.to_f / pixbuf_width
+
+    image_height = image.allocated_height
+    pixbuf_height = pixbuf.height
+    height_scale = image_height.to_f / pixbuf_height
+
+    scale = width_scale < height_scale ? width_scale : height_scale
+    if scale > 1
+      scale = 1
+    end
+    scale
   end
 
   def add_tag(string)
