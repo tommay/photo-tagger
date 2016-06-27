@@ -115,9 +115,19 @@ class Viewer
     event_box = Gtk::EventBox.new
     event_box.add(@image)
     box.pack_start(event_box, expand: true, fill: true)
-#    event_box.signal_connect("button-press-event") do
-#      puts "Clicked."
-#    end
+
+    x = 0
+    y = 0
+    event_box.signal_connect("button-press-event") do |widget, event|
+      puts "button-press-event"
+      x = event.x
+      y = event.y
+      false
+    end
+    event_box.signal_connect("motion-notify-event") do |widget, event|
+      puts "motion-notify-event #{event.x - x} #{event.y - y}"
+      false
+    end
 
     # Finally, the top-level window.
 
