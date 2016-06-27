@@ -297,10 +297,13 @@ class Viewer
 
   def use_recent_tags(older_or_newer)
     if @photo
-      tags = @photo.tags.map {|t| t.tag}
-      @photo.tags.clear
-      @recent.send(older_or_newer, tags).each do |t|
-        @photo.add_tag(t)
+      current_tags = @photo.tags.map {|t| t.tag}
+      new_tags = @recent.send(older_or_newer, current_tags)
+      (current_tags - new_tags).each do |tag|
+        @photo.remove_tag(tag)
+      end
+      (new_tags - current_tags).each do |tag|
+        @photo.add_tag(tag)
       end
       @photo.save
       load_applied_tags
