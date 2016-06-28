@@ -1,5 +1,7 @@
 require "gtk3"
 
+# This class's use of instance variables is atrocious.
+
 class PhotoWindow
   def initialize
     @image = Gtk::Image.new.tap do |o|
@@ -22,26 +24,22 @@ class PhotoWindow
     end
 
     @event_box.signal_connect("button-press-event") do |widget, event|
-      save_xy(event)
+      @motion_tracker = MotionTracker.new(event)
       false
     end
 
     @event_box.signal_connect("motion-notify-event") do |widget, event|
+      @motion_tracker.track(event)
+
       if @scaled_pixbuf
-        @offset_x -= event.x - @last_x
-        @offset_y -= event.y - @last_y
+        @offset_x -= @motion_tracker.delta_x
+        @offset_y -= @motion_tracker.delta_y
         bound_offsets
-        save_xy(event)
         show_scaled_pixbuf
       end
 
       false
     end
-  end
-
-  def save_xy(event)
-    @last_x = event.x
-    @last_y = event.y
   end
 
   def bound_offsets
@@ -140,3 +138,21 @@ class PhotoWindow
     @event_box
   end
 end
+
+class MotionTracker
+  attr_reader :delta_x, :delta_y
+
+  def initialize(event)
+    @last_x = event.x
+    @last_y = event.y
+  end
+
+  def track(event)
+    @delta_x = event.x - @last_x
+    @last_x = event.x
+    @delta_y = event.y - @last_y
+    @last_y = event.y
+  end
+end
+
+
