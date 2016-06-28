@@ -15,7 +15,6 @@ class PhotoWindow
     @event_box.add(@image)
 
     @scale = :fit
-    @scale = 1
     @offset_x = 0
     @offset_y = 0
 
@@ -76,7 +75,8 @@ class PhotoWindow
     @scale = scale
     if @pixbuf
       scale = compute_scale(@scale, @image, @pixbuf)
-      @scaled_pixbuf = scale_pixbuf(@pixbuf, scale)
+      @scaled_pixbuf = scale_pixbuf(scale)
+      bound_offsets
       show_scaled_pixbuf
     end
   end
@@ -89,16 +89,20 @@ class PhotoWindow
   def show_pixbuf
     if @pixbuf
       scale = compute_scale(@scale, @image, @pixbuf)
-      if scale != @last_scale || @pixbuf != @last_pixbuf
-        @last_scale = scale
-        @last_pixbuf = @pixbuf
-        @scaled_pixbuf =
-          @pixbuf.scale(@pixbuf.width * scale, @pixbuf.height * scale)
-      end
+      scale_pixbuf(scale)
       bound_offsets
       show_scaled_pixbuf
     else
       @image.set_pixbuf(nil)
+    end
+  end
+
+  def scale_pixbuf(scale)
+    if scale != @last_scale || @pixbuf != @last_pixbuf
+      @last_scale = scale
+      @last_pixbuf = @pixbuf
+      @scaled_pixbuf =
+        @pixbuf.scale(@pixbuf.width * scale, @pixbuf.height * scale)
     end
   end
 

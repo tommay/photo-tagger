@@ -217,6 +217,12 @@ class Viewer
           use_recent_tags(:newer)
         end
         true
+      when Gdk::Keyval::KEY_1
+        @photo_window.set_scale(1)
+        true
+      when Gdk::Keyval::KEY_2
+        @photo_window.set_scale(:fit)
+        true
       end
     end
 
