@@ -75,7 +75,7 @@ class PhotoWindow
     @scale = scale
     if @pixbuf
       scale = compute_scale(@scale, @image, @pixbuf)
-      @scaled_pixbuf = scale_pixbuf(scale)
+      scale_pixbuf(scale)
       bound_offsets
       show_scaled_pixbuf
     end
