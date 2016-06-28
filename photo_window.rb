@@ -96,9 +96,9 @@ class PhotoWindow
         @last_pixbuf = @pixbuf
         @scaled_pixbuf =
           @pixbuf.scale(@pixbuf.width * scale, @pixbuf.height * scale)
-        bound_offsets
-        show_scaled_pixbuf
       end
+      bound_offsets
+      show_scaled_pixbuf
     else
       @image.set_pixbuf(nil)
     end
