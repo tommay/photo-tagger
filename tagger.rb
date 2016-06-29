@@ -2,6 +2,7 @@
 
 require "bundler/setup"
 require "gtk3"
+require "fileutils"
 require "byebug"
 
 require_relative "model"
@@ -162,7 +163,7 @@ class Viewer
       when Gdk::Keyval::KEY_Right
         next_photo
       when Gdk::Keyval::KEY_Delete
-        delete_file
+        @photo && delete_photo
       when Gdk::Keyval::KEY_d
         if event.state == Gdk::ModifierType::CONTROL_MASK
           switch_to_from_deleted_directory
@@ -170,7 +171,7 @@ class Viewer
         end
       when Gdk::Keyval::KEY_z
         if event.state == Gdk::ModifierType::CONTROL_MASK
-          undelete_file
+          undelete_photo
           true
         end
       when Gdk::Keyval::KEY_v
@@ -201,6 +202,11 @@ class Viewer
       when Gdk::Keyval::KEY_r
         if event.state == Gdk::ModifierType::CONTROL_MASK
           restore_last
+          true
+        end
+      when Gdk::Keyval::KEY_m
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          @photo && move_photo_dialog
           true
         end
       when Gdk::Keyval::KEY_comma
@@ -400,9 +406,7 @@ class Viewer
 
   # XXX Wow this is ugly.
   #
-  def delete_file
-    return if !@photo
-
+  def delete_photo
     # If we're not in a .deleted directory, then delete by creating
     # and renaming to a .deleted subdirectory.  If we're in a .deleted
     # directory, then delete by renaming/restoring to the parent
@@ -417,18 +421,7 @@ class Viewer
 
     # Remember all the "deleted" files fir crufty undelete.
 
-    @deleted_files = []
-
-    # Delete everything with the same basename regardless of suffix.
-
-    @photo.basename =~ /^(.*)\./
-    base = $1 || @photo.basename
-
-    Dir[File.join(@file_list.directory, "#{base}.*")].each do |n|
-      deleted = File.join(deleted_dirname, File.basename(n))
-      File.rename(n, deleted)
-      @deleted_files << [n, deleted]
-    end
+    @deleted_files = move_related_files(@photo.filename, deleted_dirname)
 
     # Delete from files_list and remember the last file deleted for
     # crufty undelete.
@@ -438,9 +431,23 @@ class Viewer
     load_photo(@file_list.current)
   end
 
+  def move_related_files(filename, dst_dir)
+    # Move everything with the same basename regardless of suffix.
+
+    src_dir = File.dirname(filename)
+    File.basename(filename) =~ /^(.*)\./
+    base = $1
+
+    Dir[File.join(src_dir, "#{base}.*")].map do |src_name|
+      dst_name = File.join(dst_dir, File.basename(src_name))
+      File.rename(src_name, dst_name)
+      [src_name, dst_name]
+    end
+  end
+
   # XXX this is super-crufty.
   #
-  def undelete_file
+  def undelete_photo
     if @deleted
       @deleted_files.each do |name, deleted|
         File.rename(deleted, name)
@@ -525,7 +532,7 @@ class Viewer
 
     # Move the .bak file to .deleted with the original filename.  This
     # makes it look like we deleted the file.  Unless there is already
-    # an existing "deleted" file, in qhich case just leave it.  This
+    # an existing "deleted" file, in which case just leave it.  This
     # allows multiple rotations to be undone by restoring the original
     # backup.
 
@@ -571,6 +578,41 @@ class Viewer
         Dir.mkdir(deleted_dirname)
       end
     end
+  end
+
+  def move_photo_dialog
+    EntryDialog.new(
+      title: "Move To", parent: @window,
+      text: @move_last || @file_list.directory,
+      width_chars: @file_list.directory.size + 20) do |text|
+      begin
+        move_photo(@photo, text)
+        @move_last = text
+      rescue => ex
+        dialog = Gtk::MessageDialog.new(
+          type: Gtk::MessageType::ERROR,
+          message: "#{text}: #{ex}",
+          buttons: :ok,
+          parent: @window,
+          flags: Gtk::DialogFlags::DESTROY_WITH_PARENT)
+        dialog.run
+        dialog.destroy
+      end
+    end
+  end
+
+  def move_photo(photo, new_directory)
+    if !File.exist?(new_directory) # XXX && ask_create(new_directory)
+      FileUtils.mkdir_p(new_directory)
+    end
+
+    @deleted_files = move_related_files(photo.filename, new_directory)
+    @deleted = @file_list.delete_current
+
+    photo.directory = new_directory
+    photo.save
+
+    load_photo(@file_list.current)
   end
 
   def save_last
