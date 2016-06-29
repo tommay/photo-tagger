@@ -171,7 +171,7 @@ class Viewer
         end
       when Gdk::Keyval::KEY_z
         if event.state == Gdk::ModifierType::CONTROL_MASK
-          undelete_photo
+          restore_photo
           true
         end
       when Gdk::Keyval::KEY_v
@@ -412,19 +412,19 @@ class Viewer
     # directory, then delete by renaming/restoring to the parent
     # directory.
 
-    deleted_dirname =
+    dst_dirname =
       if File.basename(@file_list.directory) != ".deleted"
         create_deleted_dir(@file_list.directory)
       else
         File.dirname(@file_list.directory)
       end
 
-    # Remember all the "deleted" files fir crufty undelete.
+    # Remember all the "deleted" files fir crufty restore.
 
-    @deleted_files = move_related_files(@photo.filename, deleted_dirname)
+    @moved_files = move_related_files(@photo.filename, dst_dirname)
 
     # Delete from files_list and remember the last file deleted for
-    # crufty undelete.
+    # crufty restore.
 
     @deleted = @file_list.delete_current
 
@@ -447,9 +447,9 @@ class Viewer
 
   # XXX this is super-crufty.
   #
-  def undelete_photo
+  def restore_photo
     if @deleted
-      @deleted_files.each do |name, deleted|
+      @moved_files.each do |name, deleted|
         File.rename(deleted, name)
         # If there is a database entry for this file then make sure
         # its sha1 is up to date.
@@ -459,12 +459,12 @@ class Viewer
           photo.save
         end
       end
-      @deleted_files = nil
+      @moved_files = nil
 
       # XXX It would be cleaner just to do set_filename and have it
       # reload the directory.  It should be performant.
 
-      @file_list.undelete(@deleted)
+      @file_list.restore(@deleted)
 
       load_photo(@file_list.current)
     end
@@ -542,10 +542,10 @@ class Viewer
       File.rename("#{@photo.filename}.bak", deleted_filename)
     end
 
-    # Set things up so the file can be restored with undelete.
+    # Set things up so the file can be restored with restore.
 
     @deleted = @file_list.fake_delete_current
-    @deleted_files = [[@photo.filename, deleted_filename]]
+    @moved_files = [[@photo.filename, deleted_filename]]
 
     # Show the transformed photo.
 
@@ -606,7 +606,7 @@ class Viewer
       FileUtils.mkdir_p(new_directory)
     end
 
-    @deleted_files = move_related_files(photo.filename, new_directory)
+    @moved_files = move_related_files(photo.filename, new_directory)
     @deleted = @file_list.delete_current
 
     photo.directory = new_directory

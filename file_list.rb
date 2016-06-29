@@ -50,7 +50,7 @@ class FileList
     [@nfile, current]
   end
 
-  def undelete(deleted)
+  def restore(deleted)
     @nfile = deleted[0]
 
     # Insert deleted[1] into @filenames unless it's already there,
