@@ -80,6 +80,7 @@ class Photo
   end
 
   def self.compute_sha1(filename)
+    GC.start
     pixbuf = Gdk::Pixbuf.new(file: filename)
     Base64.strict_encode64(Digest::SHA1.digest(pixbuf.pixels))
   end

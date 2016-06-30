@@ -84,6 +84,7 @@ class PhotoWindow
   def show_photo(filename)
     @pixbuf = filename && Gdk::Pixbuf.new(file: filename)
     show_pixbuf
+    GC.start
   end
 
   def show_pixbuf
