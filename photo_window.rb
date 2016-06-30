@@ -3,6 +3,8 @@ require "gtk3"
 # This class's use of instance variables is atrocious.
 
 class PhotoWindow
+  Crop = Struct.new(:x, :y, :width, :height)
+
   def initialize
     @image = Gtk::Image.new.tap do |o|
       o.set_size_request(400, 400)
@@ -23,7 +25,12 @@ class PhotoWindow
     end
 
     @event_box.signal_connect("button-press-event") do |widget, event|
-      @motion_tracker = MotionTracker.new(event)
+      case event.type.nick
+      when "button-press"
+        @motion_tracker = MotionTracker.new(event)
+      when "2button-press"
+        zoom_to(event.x, event.y)
+      end
       false
     end
 
@@ -73,12 +80,7 @@ class PhotoWindow
 
   def set_scale(scale)
     @scale = scale
-    if @pixbuf
-      scale = compute_scale(@scale, @image, @pixbuf)
-      scale_pixbuf(scale)
-      bound_offsets
-      show_scaled_pixbuf
-    end
+    show_pixbuf
   end
 
   def show_photo(filename)
@@ -89,8 +91,8 @@ class PhotoWindow
 
   def show_pixbuf
     if @pixbuf
-      scale = compute_scale(@scale, @image, @pixbuf)
-      scale_pixbuf(scale)
+      @scale_factor = compute_scale(@scale, @image, @pixbuf)
+      scale_pixbuf(@scale_factor)
       bound_offsets
       show_scaled_pixbuf
     else
@@ -108,11 +110,13 @@ class PhotoWindow
   end
 
   def show_scaled_pixbuf
-    cropped = Gdk::Pixbuf.new(
-      @scaled_pixbuf, @offset_x, @offset_y,
+    @crop = Crop.new(
+      @offset_x, @offset_y,
       min(@image.allocated_width, @scaled_pixbuf.width),
       min(@image.allocated_height, @scaled_pixbuf.height))
-    @image.set_pixbuf(cropped)
+    cropped_pixbuf = Gdk::Pixbuf.new(
+      @scaled_pixbuf, @crop.x, @crop.y, @crop.width, @crop.height)
+    @image.set_pixbuf(cropped_pixbuf)
   end
 
   def compute_scale(scale, image, pixbuf)
@@ -137,6 +141,26 @@ class PhotoWindow
     scale > 1 ? 1 : scale
   end
 
+  def zoom_to(x, y)
+    x, y = get_pixbuf_coords(x, y)
+
+    crop_width = min(@image.allocated_width, @pixbuf.width)
+    crop_height = min(@image.allocated_height, @pixbuf.height)
+
+    @offset_x = x - crop_width / 2
+    @offset_y = y - crop_height / 2
+
+    set_scale(1)
+  end
+
+  def get_pixbuf_coords(x, y)
+    excess_width = @image.allocated_width - @crop.width
+    x = (x - excess_width / 2 + @crop.x) / @scale_factor
+    excess_height = @image.allocated_height - @crop.height
+    y = (y - excess_height / 2 + @crop.y) / @scale_factor
+    [x, y]
+  end
+
   # This is only for packing the window layout, yuck.
   #
   def get_widget
@@ -159,5 +183,3 @@ class MotionTracker
     @last_y = event.y
   end
 end
-
-
