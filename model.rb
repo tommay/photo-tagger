@@ -36,7 +36,9 @@ class Photo
     # have to delete them manually then reload otherwise dm thinks
     # there are still photo_tags that will be left hanging.
     # XXX DM isn't setting up the schema with foreign keys, WTF?
-    photo_tags.each(&:destroy)
+    Photo.transaction do
+      photo_tags.each(&:destroy)
+    end
     reload
     super
   end
@@ -173,7 +175,7 @@ DataMapper::Model.raise_on_save_failure = true
 
 # If you want the logs displayed you have to do this before the call to setup
 #
-DataMapper::Logger.new($stdout, :info)
+DataMapper::Logger.new($stdout, :debug)
 
 module Model
   def self.setup(name, file)

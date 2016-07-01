@@ -297,13 +297,15 @@ class Viewer
     if @photo
       current_tags = @photo.tags.map {|t| t.tag}
       new_tags = @recent.send(older_or_newer, current_tags)
-      (current_tags - new_tags).each do |tag|
-        @photo.remove_tag(tag)
+      Photo.transaction do
+        (current_tags - new_tags).each do |tag|
+          @photo.remove_tag(tag)
+        end
+        (new_tags - current_tags).each do |tag|
+          @photo.add_tag(tag)
+        end
+        @photo.save
       end
-      (new_tags - current_tags).each do |tag|
-        @photo.add_tag(tag)
-      end
-      @photo.save
       load_applied_tags
     end
   end
@@ -513,9 +515,11 @@ class Viewer
     end
     File.rename(@file_list.directory, new_directory)
 
-    Photo.all(directory: @file_list.directory).each do |photo|
-      photo.directory = new_directory
-      photo.save
+    Photo.transaction do
+      Photo.all(directory: @file_list.directory).each do |photo|
+        photo.directory = new_directory
+        photo.save
+      end
     end
 
     set_filename(File.join(new_directory, @photo.basename))

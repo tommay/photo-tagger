@@ -32,13 +32,15 @@ if !new_tag
   old_tag.tag = new_name
   old_tag.save
 else
-  # Add new_tag to old_tag's photos.
-  old_tag.photos.each do |photo|
-    photo.tags << new_tag
-    photo.save
- end
-  # Destroy old_tag.
-  old_tag.photos.clear
-  old_tag.save
-  old_tag.destroy
+  Photo.transaction do
+    # Add new_tag to old_tag's photos.
+    old_tag.photos.each do |photo|
+      photo.tags << new_tag
+      photo.save
+    end
+    # Destroy old_tag.
+    old_tag.photos.clear
+    old_tag.save
+    old_tag.destroy
+  end
 end
