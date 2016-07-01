@@ -120,6 +120,7 @@ class Photo
     if !self.tags.include?(tag)
       self.tags << tag
       self.save
+      #self.reload
       true
     end
   end
@@ -129,6 +130,13 @@ class Photo
     if tag
       self.tags.delete(tag)
       self.save
+      # Not sure why this is necessary, but it wors around the following:
+      # - add_tag("x"): INSERT executed
+      # - remove_tag("x"): DELETE executed
+      # - add_tag("x"): no INSERT executed
+      # DataMapper seems to think tag "x" is still applied and no INSERT
+      # is required.
+      self.reload
       true
     end
   end
