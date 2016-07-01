@@ -175,7 +175,7 @@ DataMapper::Model.raise_on_save_failure = true
 
 # If you want the logs displayed you have to do this before the call to setup
 #
-DataMapper::Logger.new($stdout, :debug)
+DataMapper::Logger.new($stdout, :info)
 
 module Model
   def self.setup(name, file)

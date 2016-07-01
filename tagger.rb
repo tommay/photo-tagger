@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
+require "set"
 require "gtk3"
 require "fileutils"
 require "byebug"
@@ -34,6 +35,13 @@ class Viewer
 
     @available_tags_list, @available_tags = create_treeview("Available tags")
     @directory_tags_list, @directory_tags = create_treeview("Directory tags")
+
+    # Searching a Gtk::ListStore is noticeably slow, especially if the
+    # item isn't found or is near the end of the list.  So maintain an
+    # auxiliary set of the tags in the list for fast determination of
+    # whether a tag is already in the list.
+
+    @available_tags_set = Set.new
 
     @tag_entry = Gtk::Entry.new.tap do |o|
       # The completion list intentionally uses all tags, instead of
@@ -378,6 +386,7 @@ class Viewer
       @available_tags_list.clear
       Tag.all.each do |tag|
         @available_tags_list.append[0] = tag.tag
+        @available_tags_set << tag.tag
       end
     ensure
       #@available_tags_list.set_sort_column_id(*sort_column_id)
@@ -385,17 +394,9 @@ class Viewer
   end
 
   def add_available_tag(tag)
-    if enumerator_for(@available_tags_list).none?{|item| item[0] == tag}
+    if !@available_tags_set.include?(tag)
       @available_tags_list.append[0] = tag
-    end
-  end
-
-  def enumerator_for(list_store)
-    Enumerator.new do |y|
-      # If list_store is empty, iter will be nil.
-      if iter = list_store.iter_first
-        y << iter while iter.next!
-      end
+      @available_tags_set << tag
     end
   end
 
