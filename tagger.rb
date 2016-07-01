@@ -490,16 +490,20 @@ class Viewer
       begin
         rename_photos_directory(text)
       rescue => ex
-        dialog = Gtk::MessageDialog.new(
-          type: Gtk::MessageType::ERROR,
-          message: "#{text}: #{ex}",
-          buttons: :ok,
-          parent: @window,
-          flags: Gtk::DialogFlags::DESTROY_WITH_PARENT)
-        dialog.run
-        dialog.destroy
+        error_dialog("#{text}: #{ex}")
       end
     end
+  end
+
+  def error_dialog(msg)
+    dialog = Gtk::MessageDialog.new(
+      type: Gtk::MessageType::ERROR,
+      message: msg,
+      buttons: :ok,
+      parent: @window,
+      flags: Gtk::DialogFlags::DESTROY_WITH_PARENT)
+    dialog.run
+    dialog.destroy
   end
 
   # XXX This breaks deleted files.
@@ -517,13 +521,19 @@ class Viewer
     set_filename(File.join(new_directory, @photo.basename))
   end
 
-  def transform(&block)
+  def transform(*args)
     return if !@photo
     return if File.basename(@file_list.directory) == ".deleted"
 
     # Transform the file, and create a .bak file.
 
-    block.call
+    msg = IO.popen(["/usr/bin/env"] + args, err: [:child, :out]) do |pipe|
+      pipe.readlines(nil).first.chomp
+    end
+    if !$?.success?
+      error_dialog(msg)
+      return
+    end
 
     # Update the sha1.
 
@@ -555,21 +565,15 @@ class Viewer
   def crop_6mm
     # Losslessly crop and create a .bak file.
 
-    transform do
-      system("/usr/bin/env", "6mm", @photo.filename)
-    end
+    transform("6mm", @photo.filename)
   end
 
   def rotate_left
-    transform do
-      system("/usr/bin/env", "jrot", "-l", @photo.filename)
-    end
+    transform("jrot", "-l", @photo.filename)
   end
 
   def rotate_right
-    transform do
-      system("/usr/bin/env", "jrot", "-r", @photo.filename)
-    end
+    transform("jrot", "-r", @photo.filename)
   end
 
   def create_deleted_dir(directory)
