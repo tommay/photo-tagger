@@ -202,3 +202,4 @@ module Model
 end
 
 Model.setup(:default, DB_FILE)
+Photo.repository.adapter.execute("pragma journal_mode = truncate")
