@@ -8,8 +8,6 @@ require "base64"
 require "exiv2"
 require "byebug"
 
-DB_FILE = ENV["TAGGER_DB"] || "/home/tom/tagger/tags.db"
-
 # XXX Use Integer instead of DateTime?
 
 class Photo
@@ -201,5 +199,24 @@ module Model
   end
 end
 
-Model.setup(:default, DB_FILE)
+# Grovel up the directory tree looking for a .taggerdb file to tell us
+# what directory to use.  If not found, get it from the environment or
+# use a default.
+
+get_db = lambda do |dir|
+  if dir == "/"
+    ENV["TAGGER_DB"] || "/home/tom/tagger/tags.db"
+  else
+    file = File.join(dir, ".taggerdb")
+    if File.exist?(file)
+      File.read(file).chomp
+    else
+      get_db.call(File.dirname(dir))
+    end
+  end
+end
+
+db_file = get_db.call(Dir.pwd)
+
+Model.setup(:default, db_file)
 Photo.repository.adapter.execute("pragma journal_mode = truncate")
