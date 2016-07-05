@@ -590,13 +590,20 @@ class Viewer
   end
 
   def move_photo_dialog
+    last =
+      if @move_last_directory == @file_list.directory
+        @move_last
+      else
+        @file_list.directory
+      end
     EntryDialog.new(
       title: "Move To", parent: @window,
-      text: @move_last || @file_list.directory,
+      text: last,
       width_chars: @file_list.directory.size + 20) do |text|
       begin
         move_photo(@photo, text)
         @move_last = text
+        @move_last_directory = @file_list.directory
       rescue => ex
         dialog = Gtk::MessageDialog.new(
           type: Gtk::MessageType::ERROR,
