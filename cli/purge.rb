@@ -13,6 +13,7 @@ require_relative "../model"
 
 options = Trollop::options do
   banner "Usage: #{$0} [options] file|directory..."
+  opt :recurse, "Purge subdirectories too"
   opt :force, "Force removal even if file exists"
 end
 
@@ -24,7 +25,11 @@ rescue Errno::ENOENT => ex
   # entered correctly.
 end
 
-Photo.all(directory: directory).each do |photo|
+if options.recurse
+  Photo.all(:directory.like => File.join(directory, "%"))
+else
+  Photo.all(directory: directory)
+end.each do |photo|
   if options.force || !File.exist?(photo.filename)
     photo.destroy
   end
