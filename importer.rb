@@ -3,7 +3,8 @@ require_relative "xmp"
 
 module Importer
   def self.find_or_import_from_file(filename, copy_tags: false,
-                                    purge_identical_images: false)
+                                    purge_identical_images: false,
+                                    force_purge: false)
     # Fetch or create a database entry.
 
     photo = Photo.find_or_create(filename)
@@ -30,11 +31,12 @@ module Importer
 
     photo.save
 
-    # If requested, purge identical images that no longer exist.
+    # If requested, purge identical images that no longer exist.  If
+    # force_purge ten piurge them even if they do exist.
 
     if purge_identical_images
       photo.identical.each do |identical|
-        if !File.exist?(identical.filename)
+        if force_purge || !File.exist?(identical.filename)
           identical.destroy
         end
       end

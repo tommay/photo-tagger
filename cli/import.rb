@@ -17,13 +17,15 @@ options = Trollop::options do
   banner "Usage: #{$0} [options] file|directory..."
   opt :copy, "Copy tags from existing identical images"
   opt :purge, "Purge identical images that no longer exist"
+  opt :force, "Purge identical images even if they exist"
   opt :recurse, "Recurse into directories"
 end
 
 def import(filename, options)
   Files.image_files(filename, options.recurse).each do |file|
     Importer.find_or_import_from_file(
-      file, copy_tags: options.copy, purge_identical_images: options.purge)
+      file, copy_tags: options.copy, purge_identical_images: options.purge,
+      force_purge: options.force)
   end
 end
 
