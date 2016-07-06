@@ -261,6 +261,7 @@ class Viewer
       o.headers_visible = false
       o.enable_search = false
       o.selection.mode = Gtk::SelectionMode::NONE
+      o.activate_on_single_click = true
       renderer = Gtk::CellRendererText.new
       # Fixed text property:
       # renderer.set_text("blah")
