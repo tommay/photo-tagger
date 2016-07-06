@@ -35,13 +35,18 @@ class PhotoWindow
     end
 
     @event_box.signal_connect("motion-notify-event") do |widget, event|
-      @motion_tracker.track(event)
+      # I'm not sure how things have gotten here without
+      # @motion_tracker being set, but they have.
 
-      if @scaled_pixbuf
-        @offset_x -= @motion_tracker.delta_x
-        @offset_y -= @motion_tracker.delta_y
-        bound_offsets
-        show_scaled_pixbuf
+      if @motion_tracker
+        @motion_tracker.track(event)
+
+        if @scaled_pixbuf
+          @offset_x -= @motion_tracker.delta_x
+          @offset_y -= @motion_tracker.delta_y
+          bound_offsets
+          show_scaled_pixbuf
+        end
       end
 
       false
