@@ -205,7 +205,7 @@ end
 
 get_db = lambda do |dir|
   if dir == "/"
-    ENV["TAGGER_DB"] || "/home/tom/tagger/tags.db"
+    "/home/tom/tagger/tags.db"
   else
     file = File.join(dir, ".taggerdb")
     if File.exist?(file)
@@ -216,7 +216,7 @@ get_db = lambda do |dir|
   end
 end
 
-db_file = get_db.call(Dir.pwd)
+db_file = ENV["TAGGER_DB"] || get_db.call(Dir.pwd)
 
 Model.setup(:default, db_file)
 Photo.repository.adapter.execute("pragma journal_mode = truncate")
