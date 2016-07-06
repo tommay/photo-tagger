@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require "pathname"
+ENV["BUNDLE_GEMFILE"] = Pathname.new(__FILE__).realpath.dirname.join("Gemfile").to_s
 
 cmd = ARGV.shift
 cli = File.join(File.dirname(Pathname.new(__FILE__).realpath), "cli")

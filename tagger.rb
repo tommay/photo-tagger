@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 
+require "pathname"
+ENV["BUNDLE_GEMFILE"] = Pathname.new(__FILE__).realpath.dirname.join("Gemfile").to_s
+
 require "bundler/setup"
 require "set"
 require "gtk3"
