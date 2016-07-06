@@ -23,9 +23,13 @@ end
 
 def import(filename, options)
   Files.image_files(filename, options.recurse).each do |file|
-    Importer.find_or_import_from_file(
-      file, copy_tags: options.copy, purge_identical_images: options.purge,
-      force_purge: options.force)
+    begin
+      Importer.find_or_import_from_file(
+        file, copy_tags: options.copy, purge_identical_images: options.purge,
+        force_purge: options.force)
+    rescue => ex
+      puts "error: #{file}: #{ex}"
+    end
   end
 end
 

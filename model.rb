@@ -68,7 +68,7 @@ class Photo
         nil
       end
     date = date.first if Array === date
-    if date && date !~ /^0/
+    if date && date != "" && date !~ /^0/
       date, time = date.split(" ")
       date.gsub!(/:/, "-")
       "#{date} #{time}"
