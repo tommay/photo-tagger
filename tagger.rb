@@ -161,6 +161,20 @@ class Viewer
       add_tag(tag)
     end
 
+    # When we start typing with the focus on one of the treeviews,
+    # move the focus to the @tag_entry instead of making the user do
+    # it manually after realizing @tag_entry isn't focused.
+
+    [@applied_tags, @available_tags, @directory_tags].each do |treeview|
+      treeview.signal_connect("key-press-event") do |widget, event|
+        if event.string >= "a" && event.string <= "z"
+          @tag_entry.grab_focus
+          @tag_entry.event(event)
+        end
+        false
+      end
+    end
+
     load_available_tags
 
     @window.signal_connect("key-press-event") do |widget, event|
