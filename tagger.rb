@@ -18,7 +18,7 @@ require_relative "savelist"
 require_relative "entry_dialog"
 require_relative "restore"
 
-class Viewer
+class Tagger
   def initialize(args)
     init_ui
     @recent = SaveList.new([])
@@ -29,13 +29,15 @@ class Viewer
     # Create the widgets we actually care about and save in instance
     # variables and use.  Then lay them out.
 
+    @rating = Gtk::Label.new
+
     # Applied tags aren't sorted.  It's more intuitive to leave them
     # in the order they're added at first.  XXX might want to add a column
     # to photo_tags for this.
 
     @applied_tags_list, @applied_tags =
       create_treeview("Applied tags", sorted: false)
-    @applied_tags.headers_visible = true
+    #@applied_tags.headers_visible = true
 
     @available_tags_list, @available_tags = create_treeview("Available tags")
     @directory_tags_list, @directory_tags = create_treeview("Directory tags")
@@ -71,9 +73,12 @@ class Viewer
 
     @photo_window = PhotoWindow.new
 
-    # Widget layout.  The tag TreeViews get wrapped in ScrolledWindows
-    # and put into a Paned.  @tag_entry goes into a Box with
-    # @available_tags and the Box goes in the lower pane.
+    # Widget layout.  The tag TreeViews get wrapped in
+    # ScrolledWindows.  There are two panes, upper and lower, whose
+    # boundary can be dragged up and down.  The upper pane gets a box
+    # containing @rating, @applied_tags, and @textentry.  The lower
+    # pane gets a notebook containing @directory_tags and
+    # @available_tags.
 
     # "Often, it is useful to put each child inside a Gtk::Frame with
     # the shadow type set to Gtk::SHADOW_IN so that the gutter appears
@@ -88,7 +93,17 @@ class Viewer
       o.overlay_scrolling = false
     end
     scrolled.add(@applied_tags)
-    paned.pack1(scrolled, resize: true, shrink: false)
+
+    # Box up @rating, @applied_tags's ScrollWindow, and @tag_entry.
+
+    box = Gtk::Box.new(:vertical)
+    box.pack_start(@rating, expand: false)
+    box.pack_start(scrolled, expand: true, fill: true)
+    box.pack_start(@tag_entry, expand: false)
+
+    # Put the box in the upper pane.
+
+    paned.pack1(box, resize: true, shrink: false)
 
     # Make the available tags treeviews scrollable, and put them in a notebook
     # with a page for each type (all, directory, etc.).
@@ -111,23 +126,21 @@ class Viewer
       notebook.append_page(scrolled, label)
     end
 
-    # Box up @tag_entry and notebook.
+    # Put the notebook in the lower pane.
 
-    box = Gtk::Box.new(:vertical)
-    box.pack_start(@tag_entry, expand: false)
-    box.pack_start(notebook, expand: true, fill: true)
-    paned.pack2(box, resize: true, shrink: false)
+    paned.pack2(notebook, resize: true, shrink: false)
     #paned.position = ??
+
+    # The Paned and the PhotoWindow go left and right.
 
     box = Gtk::Box.new(:horizontal)
     box.pack_start(paned, expand: false)
-
     box.pack_start(@photo_window.get_widget, expand: true, fill: true)
 
-    # Finally, the top-level window.
+    # Finally, put the box in the top-level window.
 
     @window = Gtk::Window.new.tap do |o|
-      o.title = "Viewer"
+      o.title = "Tagger"
       # o.override_background_color(:normal, Gdk::RGBA::new(0.2, 0.2, 0.2, 1))
       o.set_default_size(300, 280)
       o.position = :center
@@ -258,6 +271,22 @@ class Viewer
       when Gdk::Keyval::KEY_0
         @photo_window.set_scale(:fit)
         true
+      when Gdk::Keyval::KEY_1, Gdk::Keyval::KEY_2, Gdk::Keyval::KEY_3,
+           Gdk::Keyval::KEY_4, Gdk::Keyval::KEY_5
+        if @photo
+          @restore = Restore.new(@photo, @photo.rating, @file_list.current) do
+            |photo, rating, filename|
+            photo.set_rating(rating)
+            load_photo(filename)
+          end
+
+          @photo.set_rating(event.string.to_i)
+          next_photo do |filename|
+            photo = import_photo(filename)
+            !photo.rating
+          end
+        end
+        true
       end
     end
 
@@ -307,13 +336,17 @@ class Viewer
   end
 
   def load_photo(filename)
-    @photo = filename &&
-             Importer.find_or_import_from_file(
-               filename, copy_tags: true, purge_identical_images: true)
+    @photo = filename && import_photo(filename)
     load_applied_tags
     load_directory_tags
     show_filename
+    show_rating
     show_photo
+  end
+
+  def import_photo(filename)
+    Importer.find_or_import_from_file(
+      filename, copy_tags: true, purge_identical_images: true)
   end
 
   def save_recent_tags
@@ -340,10 +373,10 @@ class Viewer
     end
   end
 
-  def next_photo(delta = 1)
+  def next_photo(delta = 1, &block)
     if @photo
       save_recent_tags
-      load_photo(@file_list.next(delta))
+      load_photo(@file_list.next(delta, &block))
     end
   end
 
@@ -368,7 +401,11 @@ class Viewer
   end
 
   def show_filename
-    @window.title = "Viewer: #{@photo ? @photo.filename : @file_list.directory}"
+    @window.title = "Tagger: #{@photo ? @photo.filename : @file_list.directory}"
+  end
+
+  def show_rating
+    @rating.set_text(@photo && @photo.rating ? "*" * @photo.rating : "")
   end
 
   def show_photo
@@ -680,5 +717,5 @@ class Viewer
   end
 end
 
-Viewer.new(ARGV)
+Tagger.new(ARGV)
 Gtk.main

@@ -19,6 +19,7 @@ class Photo
   property :sha1, String, length: 28, required: true, index: :sha1
   property :filedate, DateTime, required: true # Date file was modified.
   property :taken_time, String, length: 100
+  property :rating, Integer
   property :created_at, DateTime, required: true # Date this row was updated.
 
   has n, :tags, through: Resource
@@ -139,6 +140,11 @@ class Photo
       self.reload
       true
     end
+  end
+
+  def set_rating(rating)
+    self.rating = rating
+    self.save
   end
 end
 

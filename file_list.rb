@@ -59,10 +59,13 @@ class FileList
     end
   end
 
-  def next(delta = 1)
-    if @filenames.size > 0
-      @nfile = (@nfile + delta) % @filenames.size
-    end
-    @filenames[@nfile]
+  def next(delta = 1, &block)
+    initial = @nfile
+    begin
+      if @filenames.size > 0
+        @nfile = (@nfile + delta) % @filenames.size
+      end
+    end while block && (@nfile != initial && !block.call(current))
+    current
   end
 end
