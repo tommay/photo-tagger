@@ -18,7 +18,8 @@ module Importer
       end
     end
 
-    # If there's an xmp sidecar file, read it and extract the tags.
+    # If there's an xmp sidecar file, read it and extract the tags and the
+    # rating.
     # XXX This appends tags without replacing the existing tags.
 
     xmp_filename = "#{filename}.xmp"
@@ -26,6 +27,12 @@ module Importer
       xmp = Xmp.new(File.read(xmp_filename))
       xmp.get_tags.each do |tag|
         photo.add_tag(tag)
+      end
+      if !photo.rating
+        rating = xmp.get_rating
+        if rating
+          photo.set_rating(rating)
+        end
       end
     end
 

@@ -48,6 +48,12 @@ def export_to_sidecar(filename)
     xmp.add_tag(tag.tag)
   end
 
+  # Add the photo's rating if any.
+
+  if photo.rating
+    xmp.set_rating(photo.rating)
+  end
+
   # Make a backup of the original xmp and save the new one.
 
   begin
