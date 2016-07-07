@@ -1,3 +1,5 @@
+require_relative "restore"
+
 class FileList
   def initialize(filename)
     if filename.is_a?(Array) && filename.size == 1
@@ -38,26 +40,22 @@ class FileList
   end
 
   def delete_current
-    result = [@nfile, current]
+    restore = Restore.new(@nfile, current) do |nfile, current|
+      @filenames.insert(nfile, current)
+      @nfile = nfile
+    end
+
     @filenames.delete_at(@nfile)
     if @nfile >= @filenames.size
       @nfile -= 1
     end
-    result
+
+    restore
   end
 
   def fake_delete_current
-    [@nfile, current]
-  end
-
-  def restore(deleted)
-    @nfile = deleted[0]
-
-    # Insert deleted[1] into @filenames unless it's already there,
-    # e.g., we rotated the file and are restoring it.
-
-    if @filenames[@nfile] != deleted[1]
-      @filenames.insert(@nfile, deleted[1])
+    Restore.new(@nfile) do |nfile|
+      @nfile = nfile
     end
   end
 

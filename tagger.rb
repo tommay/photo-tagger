@@ -16,6 +16,7 @@ require_relative "file_list"
 require_relative "importer"
 require_relative "savelist"
 require_relative "entry_dialog"
+require_relative "restore"
 
 class Viewer
   def initialize(args)
@@ -196,7 +197,10 @@ class Viewer
         end
       when Gdk::Keyval::KEY_z
         if event.state == Gdk::ModifierType::CONTROL_MASK
-          restore_photo
+          if @restore
+            @restore.call
+            @restore = nil
+          end
           true
         end
       when Gdk::Keyval::KEY_v
@@ -440,14 +444,18 @@ class Viewer
         File.dirname(@file_list.directory)
       end
 
-    # Remember all the "deleted" files fir crufty restore.
+    # Remember all the "deleted" files for crufty restore.
 
-    @moved_files = move_related_files(@photo.filename, dst_dirname)
+    _moved_files = move_related_files(@photo.filename, dst_dirname)
 
     # Delete from files_list and remember the last file deleted for
     # crufty restore.
 
-    @deleted = @file_list.delete_current
+    _restore_deleted = @file_list.delete_current
+
+    @restore = Restore.new do
+      restore_photo(_moved_files, _restore_deleted)
+    end
 
     load_photo(@file_list.current)
   end
@@ -468,27 +476,24 @@ class Viewer
 
   # XXX this is super-crufty.
   #
-  def restore_photo
-    if @deleted
-      @moved_files.each do |name, deleted|
-        File.rename(deleted, name)
-        # If there is a database entry for this file then make sure
-        # its sha1 is up to date.
-        photo = Photo.find(name)
-        if photo
-          photo.set_sha1
-          photo.save
-        end
+  def restore_photo(moved_files, restore_deleted)
+    moved_files.each do |name, deleted|
+      File.rename(deleted, name)
+      # If there is a database entry for this file then make sure
+      # its sha1 is up to date.
+      photo = Photo.find(name)
+      if photo
+        photo.set_sha1
+        photo.save
       end
-      @moved_files = nil
-
-      # XXX It would be cleaner just to do set_filename and have it
-      # reload the directory.  It should be performant.
-
-      @file_list.restore(@deleted)
-
-      load_photo(@file_list.current)
     end
+
+    # XXX It would be cleaner just to do set_filename and have it
+    # reload the directory.  It should be performant.
+
+    restore_deleted.call
+
+    load_photo(@file_list.current)
   end
 
   def switch_to_from_deleted_directory
@@ -577,8 +582,12 @@ class Viewer
 
     # Set things up so the file can be restored with restore.
 
-    @deleted = @file_list.fake_delete_current
-    @moved_files = [[@photo.filename, deleted_filename]]
+    _moved_files = [[@photo.filename, deleted_filename]]
+    _restore_deleted = @file_list.fake_delete_current
+
+    @restore = Restore.new do
+      restore_photo(_moved_files, _restore_deleted)
+    end
 
     # Show the transformed photo.
 
