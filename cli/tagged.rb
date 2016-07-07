@@ -30,6 +30,7 @@ class Lexer
   #  <date
   #  =date
   #  >date
+  #  r:[12345]*
   #  +
   #  (
   #  )
@@ -52,7 +53,7 @@ class Lexer
   # XXX This is still crap because the expression " will be handled as
   # a tag.
 
-  TOKENS = /[+()]|[<>=][0-9\-]+|-?"([^"]*)"|-?[^\s]+|\s+/
+  TOKENS = /[+()]|[<>=][0-9\-]+|r:[1-5]*|-?"([^"]*)"|-?[^\s]+|\s+/
 
   # Note that new is overwritten to return an Enumerator, not a Lexer.
 
@@ -71,7 +72,7 @@ class Lexer
           need_and = false
         when ")"
           y << RightParenToken.new
-          need_and = false
+          need_and = true
         when "+"
           y << PlusToken.new
           need_and = false
@@ -86,6 +87,10 @@ class Lexer
         when /^>(.*)/
           y << AndToken.new if need_and
           y << AfterDateToken.new($1)
+          need_and = true
+        when /^r:([1-5]*)$/
+          y << AndToken.new if need_and
+          y << RatingToken.new($1)
           need_and = true
         when /^-"(.*)"/, /^-(.*)/
           y << ButNotToken.new
@@ -153,6 +158,16 @@ class Lexer
     end
   end
 
+  class RatingToken < Token(100)
+    def initialize(ratings)
+      @photos = Photo.all(:rating => ratings.each_char.map{|c| c.to_i})
+    end
+
+    def nud(parser)
+      @photos
+    end
+  end
+
   class AndToken < Token(10)
     def led(parser, left)
       left & parser.expression(lbp)
@@ -189,6 +204,8 @@ expression = options.expr || ARGV.map do |arg|
     arg
   when /^-(.*)/
     "-\"#{$1}\""
+  when /^r:[1-5]*$/
+    arg
   else
     "\"#{arg}\""
   end
