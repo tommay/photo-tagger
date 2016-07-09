@@ -38,7 +38,15 @@ end.each do |photo|
       puts photo.filename
     end
     if !options.dryrun
-      photo.destroy
+      # This photo was fetched as part of a collection, so destroy is
+      # slow because when we call .photo_sets DM anticipates that
+      # we're going to need the photo_sets for all the photos and
+      # loads them all.  This might not be so bad if it remembered
+      # they were loaded, but it loads them all for each destory.
+      # There is a collection_for_self method but it's private and
+      # should be avoided.  So use first to get a Photo with no
+      # associated collection, and destroy it without distraction.
+      Photo.get(photo.id).destroy
     end
   end
 end
