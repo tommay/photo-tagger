@@ -48,7 +48,7 @@ class Photo
       photo.filedate = File.mtime(photo.filename)
       photo.created_at = Time.now
 
-      photo.taken_time = extract_time(filename)
+      photo.taken_time = extract_time(photo.filename)
       photo.set_sha1
 
       photo.save
@@ -83,7 +83,27 @@ class Photo
   def self.compute_sha1(filename)
     GC.start
     pixbuf = Gdk::Pixbuf.new(file: filename)
-    Base64.strict_encode64(Digest::SHA1.digest(pixbuf.pixels))
+    pixels = clear_edge(pixbuf)
+    Base64.strict_encode64(Digest::SHA1.digest(pixels))
+  end
+
+  def self.clear_edge(pixbuf)
+    pixbuf.pixels.tap do |pixels|
+      row_width = pixbuf.width * pixbuf.n_channels * pixbuf.bits_per_sample / 8
+      if row_width < pixbuf.rowstride
+        # This loop is really slow if we don't pull some of these things
+        # into a closure.
+        zeros = "\0" * (pixbuf.rowstride - row_width)
+        n = row_width
+        size = zeros.size
+        stride = pixbuf.rowstride
+        # The last row is not padded out to the stride.
+        0.upto(pixbuf.height - 2) do |row|
+          pixels[n, size] = zeros
+          n += stride
+        end
+      end
+    end
   end
 
   def self.find_or_new(filename)
