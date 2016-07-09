@@ -13,6 +13,9 @@ require_relative "../model"
 
 options = Trollop::options do
   banner "Usage: #{$0} [options] file|directory..."
+  opt :verbose, "Show files being purged"
+  opt :dryrun, "Dry run: see what would be purged (implies -v)",
+    short: "n", long: "dry-run"
   opt :recurse, "Purge subdirectories too"
   opt :force, "Force removal even if file exists"
 end
@@ -31,6 +34,11 @@ else
   Photo.all(directory: directory)
 end.each do |photo|
   if options.force || !File.exist?(photo.filename)
-    photo.destroy
+    if options.verbose || options.dryrun
+      puts photo.filename
+    end
+    if !options.dryrun
+      photo.destroy
+    end
   end
 end
