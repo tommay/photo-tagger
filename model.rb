@@ -90,27 +90,18 @@ class Photo
 
   def self.compute_sha1(filename)
     GC.start
-    pixbuf = Gdk::Pixbuf.new(file: filename)
-    pixels = clear_edge(pixbuf)
-    Digest::SHA1.base64digest(pixels)
-  end
-
-  def self.clear_edge(pixbuf)
-    pixbuf.pixels.tap do |pixels|
-      row_width = pixbuf.width * pixbuf.n_channels * pixbuf.bits_per_sample / 8
-      if row_width < pixbuf.rowstride
-        # This loop is really slow if we don't pull some of these things
-        # into a closure.
-        zeros = "\0" * (pixbuf.rowstride - row_width)
-        n = row_width
-        size = zeros.size
-        stride = pixbuf.rowstride
-        # The last row is not padded out to the stride.
-        0.upto(pixbuf.height - 2) do |row|
-          pixels[n, size] = zeros
-          n += stride
-        end
+    pixbuf = Gdk::Pixbuf.new(file: filename)	
+    pixels = pixbuf.pixels
+    row_width = pixbuf.width * pixbuf.n_channels * pixbuf.bits_per_sample / 8
+    if row_width < pixbuf.rowstride
+      stride = pixbuf.rowstride
+      digest = Digest::SHA1.new
+      0.upto(pixbuf.height - 1) do |row|
+        digest << pixels[row * stride, row_width]
       end
+      digest.base64digest
+    else
+      Digest::SHA1.base64digest(pixels)
     end
   end
 
