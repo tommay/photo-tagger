@@ -7,6 +7,7 @@ class Xmp
     "dc" => "http://purl.org/dc/elements/1.1/",
     "rdf" => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "xmp" => "http://ns.adobe.com/xap/1.0/",
+    "tg" => "http://tagger.tommay.net/",
   }.freeze
 
   MINIMAL = <<EOF
@@ -25,11 +26,14 @@ EOF
     end
   end
 
+  def set_sha1(sha1)
+    description = find_or_add_description
+    set_attribute(description, "tg:sha1", sha1)
+  end
+
   def add_tag(tag)
     if !get_tags.include?(tag)
-      xmpmeta = @xmp.at_css("x|xmpmeta", NAMESPACES)
-      rdf = find_or_add_child(xmpmeta, "rdf:RDF")
-      description = find_or_add_child(rdf, "rdf:Description")
+      description = find_or_add_description
       subject = find_or_add_child(description, "dc:subject")
       seq = find_or_add_child(subject, "rdf:Seq")
       li = Nokogiri::XML::Node.new("rdf:li", @xmp)
@@ -39,11 +43,14 @@ EOF
   end
 
   def set_rating(rating)
+    description = find_or_add_description
+    set_attribute(description, "xmp:Rating", rating.to_s)
+  end
+
+  def find_or_add_description
     xmpmeta = @xmp.at_css("x|xmpmeta", NAMESPACES)
     rdf = find_or_add_child(xmpmeta, "rdf:RDF")
-    description = find_or_add_child(rdf, "rdf:Description")
-    prefix = find_or_add_namespace(description, "xmp")
-    description["#{prefix}:Rating"] = rating.to_s
+    find_or_add_child(rdf, "rdf:Description")
   end
 
   def find_or_add_child(node, name)
@@ -62,6 +69,12 @@ EOF
       node.add_child(child)
     end
     child
+  end
+
+  def set_attribute(node, name, value)
+    (prefix, name) = name.split(/:/, 2)
+    prefix = find_or_add_namespace(node, prefix)
+    node["#{prefix}:#{name}"] = value
   end
 
   def find_or_add_namespace(node, prefix)

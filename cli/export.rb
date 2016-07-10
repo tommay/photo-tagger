@@ -42,13 +42,17 @@ def export_to_sidecar(filename)
       Xmp.new
     end
 
+  # Set the sha1.
+
+  xmp.set_sha1(photo.sha1)
+
   # Add the photo's tags.
 
   photo.tags.each do |tag|
     xmp.add_tag(tag.tag)
   end
 
-  # Add the photo's rating if any.
+  # Set the photo's rating if any.
 
   if photo.rating
     xmp.set_rating(photo.rating)
