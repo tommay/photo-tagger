@@ -4,7 +4,6 @@ require "data_mapper"
 require "gtk3"
 require "pathname"
 require "digest"
-require "base64"
 require "exiv2"
 require "byebug"
 
@@ -93,7 +92,7 @@ class Photo
     GC.start
     pixbuf = Gdk::Pixbuf.new(file: filename)
     pixels = clear_edge(pixbuf)
-    Base64.strict_encode64(Digest::SHA1.digest(pixels))
+    Digest::SHA1.base64digest(pixels)
   end
 
   def self.clear_edge(pixbuf)
