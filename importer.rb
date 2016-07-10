@@ -5,9 +5,15 @@ module Importer
   def self.find_or_import_from_file(filename, copy_tags: false,
                                     purge_identical_images: false,
                                     force_purge: false)
-    # Fetch or create a database entry.
+    # Load an .xmp sidecar file is there is one.
 
-    photo = Photo.find_or_create(filename)
+    xmp_filename = "#{filename}.xmp"
+    xmp = File.exist?(xmp_filename) && Xmp.new(File.read(xmp_filename))
+
+    # Fetch or create a database entry.  Re-use an existing sha1 from
+    # the xmp file to save time.
+
+    photo = Photo.find_or_create(filename, sha1: xmp && xmp.get_sha1)
 
     # If requested, add tags from existing identical images.
     # XXX this should be the default.

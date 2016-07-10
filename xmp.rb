@@ -26,11 +26,6 @@ EOF
     end
   end
 
-  def set_sha1(sha1)
-    description = find_or_add_description
-    set_attribute(description, "tg:sha1", sha1)
-  end
-
   def add_tag(tag)
     if !get_tags.include?(tag)
       description = find_or_add_description
@@ -40,6 +35,23 @@ EOF
       li.content = tag
       seq.add_child(li)
     end
+  end
+
+  def get_sha1
+    description = @xmp.at_css("rdf|Description", NAMESPACES)
+    attr = description.attribute_with_ns("sha1", NAMESPACES["tg"])
+    attr && attr.value
+  end
+
+  def set_sha1(sha1)
+    description = find_or_add_description
+    set_attribute(description, "tg:sha1", sha1)
+  end
+
+  def get_rating
+    description = @xmp.at_css("rdf|Description", NAMESPACES)
+    attr = description.attribute_with_ns("Rating", NAMESPACES["xmp"])
+    attr && attr.value
   end
 
   def set_rating(rating)

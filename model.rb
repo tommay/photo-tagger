@@ -42,18 +42,22 @@ class Photo
     super
   end
 
-  def self.find_or_create(filename)
-    photo = find_or_new(filename)
-    if photo.new?
-      photo.filedate = File.mtime(photo.filename)
-      photo.created_at = Time.now
+  def self.find_or_create(filename, sha1: nil)
+    find_or_new(filename).tap do |photo|
+      if photo.new?
+        photo.filedate = File.mtime(photo.filename)
+        photo.created_at = Time.now
 
-      photo.taken_time = extract_time(photo.filename)
-      photo.set_sha1
+        photo.taken_time = extract_time(photo.filename)
+        if sha1
+          photo.sha1 = sha1
+        else
+          photo.set_sha1
+        end
 
-      photo.save
+        photo.save
+      end
     end
-    photo
   end
 
   def self.extract_time(filename)
