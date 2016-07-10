@@ -577,10 +577,8 @@ class Tagger
     File.rename(@file_list.directory, new_directory)
 
     Photo.transaction do
-      Photo.all(directory: @file_list.directory).each do |photo|
-        photo.directory = new_directory
-        photo.save
-      end
+      Photo.all(directory: @file_list.directory)
+        .update(directory: new_directory)
     end
 
     set_filename(File.join(new_directory, @photo.basename))

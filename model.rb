@@ -128,7 +128,7 @@ class Photo
   end
 
   def identical
-    Photo.all(sha1: self.sha1).select{|x| x.id != self.id}
+    Photo.all(sha1: self.sha1, :id.not => self.id)
   end
 
   def add_tag(string)
@@ -179,10 +179,6 @@ class Tag
 
   def self.ensure(tag)
     Tag.first_or_create({tag: tag}, {created_at: Time.now})
-  end
-
-  def self.for_directory(directory)
-    Photo.all(directory: directory).tags
   end
 end
 
