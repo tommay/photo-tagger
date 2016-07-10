@@ -37,27 +37,23 @@ EOF
     end
   end
 
-  def get_sha1
-    description = @xmp.at_css("rdf|Description", NAMESPACES)
-    attr = description.attribute_with_ns("sha1", NAMESPACES["tg"])
-    attr && attr.value
+  def_attr = lambda do |name|
+    define_method(:"get_#{name}") do
+      description = @xmp.at_css("rdf|Description", NAMESPACES)
+      if description
+        attr = description.attribute_with_ns(name, NAMESPACES["tg"])
+        attr && attr.value
+      end
+    end
+
+    define_method(:"set_#{name}") do |value|
+      description = find_or_add_description
+      set_attribute(description, "tg:#{name}", value.to_s)
+    end
   end
 
-  def set_sha1(sha1)
-    description = find_or_add_description
-    set_attribute(description, "tg:sha1", sha1)
-  end
-
-  def get_rating
-    description = @xmp.at_css("rdf|Description", NAMESPACES)
-    attr = description.attribute_with_ns("Rating", NAMESPACES["xmp"])
-    attr && attr.value
-  end
-
-  def set_rating(rating)
-    description = find_or_add_description
-    set_attribute(description, "xmp:Rating", rating.to_s)
-  end
+  def_attr.call("rating")
+  def_attr.call("sha1")
 
   def find_or_add_description
     xmpmeta = @xmp.at_css("x|xmpmeta", NAMESPACES)
