@@ -160,7 +160,12 @@ class Lexer
 
   class RatingToken < Token(100)
     def initialize(ratings)
-      @photos = Photo.all(:rating => ratings.each_char.map{|c| c.to_i})
+      @photos =
+        if ratings == ""
+          Photo.all(rating: nil)
+        else
+          Photo.all(rating: ratings.each_char.map{|c| c.to_i})
+        end
     end
 
     def nud(parser)
