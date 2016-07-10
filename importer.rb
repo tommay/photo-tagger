@@ -10,10 +10,33 @@ module Importer
     xmp_filename = "#{filename}.xmp"
     xmp = File.exist?(xmp_filename) && Xmp.new(File.read(xmp_filename))
 
-    # Fetch or create a database entry.  Re-use an existing sha1 from
-    # the xmp file to save time.
+    # Fetch or create a database entry.
 
-    photo = Photo.find_or_create(filename, sha1: xmp && xmp.get_sha1)
+    photo = Photo.find_or_create(filename) do |photo|
+      # This is a new photo.  Fill in some things from xmp if we have
+      # them.  Only constant values from the photo are set here, no
+      # user-supplued values.  This saves some (a lot of) time.
+      if xmp
+        photo.sha1 = xmp.get_sha1
+        photo.taken_time = xmp.get_taken_time
+      end
+    end
+
+    # Always copy tags from an existing xmp sidecar file, even for an
+    # existing photo.  Rating is copied only if the photo is unrated.
+    # XXX This appends tags without replacing the existing tags.
+
+    if xmp
+      xmp.get_tags.each do |tag|
+        photo.add_tag(tag)
+      end
+      if !photo.rating
+        rating = xmp.get_rating
+        if rating
+          photo.set_rating(rating)
+        end
+      end
+    end
 
     # If requested, add tags from existing identical images.
     # XXX this should be the default.
@@ -23,24 +46,6 @@ module Importer
         photo.tags += identical.tags
         if !photo.rating
           photo.rating = identical.rating
-        end
-      end
-    end
-
-    # If there's an xmp sidecar file, read it and extract the tags and the
-    # rating.
-    # XXX This appends tags without replacing the existing tags.
-
-    xmp_filename = "#{filename}.xmp"
-    if File.exist?(xmp_filename)
-      xmp = Xmp.new(File.read(xmp_filename))
-      xmp.get_tags.each do |tag|
-        photo.add_tag(tag)
-      end
-      if !photo.rating
-        rating = xmp.get_rating
-        if rating
-          photo.set_rating(rating)
         end
       end
     end

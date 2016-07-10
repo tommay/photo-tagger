@@ -52,8 +52,9 @@ EOF
     end
   end
 
-  def_attr.call("rating")
   def_attr.call("sha1")
+  def_attr.call("taken_time")
+  def_attr.call("rating")
 
   def find_or_add_description
     xmpmeta = @xmp.at_css("x|xmpmeta", NAMESPACES)

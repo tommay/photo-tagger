@@ -42,16 +42,21 @@ class Photo
     super
   end
 
-  def self.find_or_create(filename, sha1: nil)
+  def self.find_or_create(filename, &block)
     find_or_new(filename).tap do |photo|
       if photo.new?
-        photo.filedate = File.mtime(photo.filename)
-        photo.created_at = Time.now
+        # Give the caller first chance to fill in values from xmp or
+        # wherever.
 
-        photo.taken_time = extract_time(photo.filename)
-        if sha1
-          photo.sha1 = sha1
-        else
+        block && block.call(photo)
+
+        # Now set anything the caller didn't.
+
+        photo.filedate ||= File.mtime(photo.filename)
+        photo.created_at ||= Time.now
+        photo.taken_time ||= extract_time(photo.filename)
+
+        if !photo.sha1
           photo.set_sha1
         end
 
