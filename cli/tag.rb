@@ -15,7 +15,9 @@ options = Trollop::options do
 end
 
 def tag(filename, add, remove)
-  photo = Photo.find_or_create(filename)
+  photo = Importer.find_or_import_from_file(
+    filename, copy_tags: true, purge_identical_images: false,
+    force_purge: false)
 
   add.each do |tag|
     photo.add_tag(tag)
