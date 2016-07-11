@@ -4,13 +4,13 @@ require "bundler/setup"
 require "trollop"
 require "byebug"
 
-require_relative "../model"
+require_relative "../importer"
 require_relative "../files"
 
 options = Trollop::options do
   banner "Usage: #{$0} [options] file|directory..."
   opt :add, "Add tag to images", type: String, multi: true
-  opt :remove, "Add tag to images", short: :R, type: String, multi: true
+  opt :remove, "Remove tag from images", short: :R, type: String, multi: true
   opt :recurse, "Recurse into directories"
 end
 
