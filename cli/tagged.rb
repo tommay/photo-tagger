@@ -113,14 +113,9 @@ class Lexer
     end
   end
 
-  class LikeTagToken < Token(100)
-    def initialize(tag)
-      @photos =
-        if tag =~ /%/
-          Tag.all(:tag.like => tag).photos
-        else
-          Tag.all(:tag => tag).photos
-        end
+  class PhotoToken < Token(100)
+    def initialize(*args)
+      @photos = photos(*args)
     end
 
     def nud(parser)
@@ -128,48 +123,41 @@ class Lexer
     end
   end
 
-  class LikeDateToken < Token(100)
-    def initialize(date)
-      @photos = Photo.all(:taken_time.like => date + "%")
-    end
-
-    def nud(parser)
-      @photos
-    end
-  end
-
-  class BeforeDateToken < Token(100)
-    def initialize(date)
-      @photos = Photo.all(:taken_time.lt => date)
-    end
-
-    def nud(parser)
-      @photos
+  class LikeTagToken < PhotoToken
+    def photos(tag)
+      if tag =~ /%/
+        Tag.all(:tag.like => tag).photos
+      else
+        Tag.all(:tag => tag).photos
+      end
     end
   end
 
-  class AfterDateToken < Token(100)
-    def initialize(date)
-      @photos = Photo.all(:taken_time.gte => date)
-    end
-
-    def nud(parser)
-      @photos
+  class LikeDateToken < PhotoToken
+    def photos(date)
+      Photo.all(:taken_time.like => date + "%")
     end
   end
 
-  class RatingToken < Token(100)
-    def initialize(ratings)
-      @photos =
-        if ratings == ""
-          Photo.all(rating: nil)
-        else
-          Photo.all(rating: ratings.each_char.map{|c| c.to_i})
-        end
+  class BeforeDateToken < PhotoToken
+    def photos(date)
+      Photo.all(:taken_time.lt => date)
     end
+  end
 
-    def nud(parser)
-      @photos
+  class AfterDateToken < PhotoToken
+    def photos(date)
+      Photo.all(:taken_time.gte => date)
+    end
+  end
+
+  class RatingToken < PhotoToken
+    def photos(ratings)
+      if ratings == ""
+        Photo.all(rating: nil)
+      else
+        Photo.all(rating: ratings.each_char.map{|c| c.to_i})
+      end
     end
   end
 
