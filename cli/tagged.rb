@@ -161,23 +161,19 @@ class Lexer
     end
   end
 
-  class AndToken < Token(10)
-    def led(parser, left)
-      left & parser.expression(lbp)
+  def self.BinaryOpToken(op)
+    Token(10).tap do |klass|
+      klass.class_exec do
+        define_method(:led) do |parser, left|
+          left.send(op, parser.expression(lbp))
+        end
+      end
     end
   end
 
-  class PlusToken < Token(10)
-    def led(parser, left)
-      left + parser.expression(lbp)
-    end
-  end
-
-  class ButNotToken < Token(10)
-    def led(parser, left)
-      left - parser.expression(lbp)
-    end
-  end
+  AndToken = BinaryOpToken(:&)
+  PlusToken = BinaryOpToken(:+)
+  ButNotToken = BinaryOpToken(:-)
 
   class LeftParenToken < Token(1)
     def nud(parser)
