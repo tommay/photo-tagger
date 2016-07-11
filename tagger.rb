@@ -271,8 +271,7 @@ class Tagger
       when Gdk::Keyval::KEY_0
         @photo_window.set_scale(:fit)
         true
-      when Gdk::Keyval::KEY_1, Gdk::Keyval::KEY_2, Gdk::Keyval::KEY_3,
-           Gdk::Keyval::KEY_4, Gdk::Keyval::KEY_5
+      when Gdk::Keyval::KEY_1 .. Gdk::Keyval::KEY_5
         if @photo
           @restore = Restore.new(@photo, @photo.rating, @file_list.current) do
             |photo, rating, filename|
@@ -280,10 +279,15 @@ class Tagger
             load_photo(filename)
           end
 
-          @photo.set_rating(event.string.to_i)
-          next_photo do |filename|
-            photo = import_photo(filename)
-            !photo.rating
+          @photo.set_rating(event.keyval - Gdk::Keyval::KEY_0)
+
+          if event.state != Gdk::ModifierType::CONTROL_MASK
+            next_photo do |filename|
+              photo = import_photo(filename)
+              !photo.rating
+            end
+          else
+            show_rating
           end
         end
         true
