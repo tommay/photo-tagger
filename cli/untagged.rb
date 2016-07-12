@@ -17,7 +17,7 @@ end
 def untagged(filename, recurse, list_directories)
   Files.image_files(filename, recurse).each do |file|
     photo = Photo.find(file)
-    if !photo || photo.tags.empty?
+    if !photo || photo.photo_tags.count == 0
       if list_directories
         directory = File.dirname(file)
         if !@directories[directory]
