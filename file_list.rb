@@ -39,6 +39,10 @@ class FileList
     @directory || File.dirname(current)
   end
 
+  def set_current(filename)
+    @nfile = @filenames.index(filename) || @nfile
+  end
+
   def delete_current
     restore = Restore.new(@nfile, current) do |nfile, current|
       @filenames.insert(nfile, current)
@@ -53,12 +57,6 @@ class FileList
     restore
   end
 
-  def fake_delete_current
-    Restore.new(@nfile) do |nfile|
-      @nfile = nfile
-    end
-  end
-
   def next(delta = 1, &block)
     initial = @nfile
     begin
@@ -67,5 +65,11 @@ class FileList
       end
     end while block && (@nfile != initial && !block.call(current))
     current
+  end
+
+  def restore_current
+    Restore.new(current) do |current|
+      set_current(current)
+    end
   end
 end

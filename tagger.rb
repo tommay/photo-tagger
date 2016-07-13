@@ -281,10 +281,10 @@ class Tagger
         end
       when Gdk::Keyval::KEY_1 .. Gdk::Keyval::KEY_5
         if @photo && !tagging?
-          @restore = Restore.new(@photo, @photo.rating, @file_list.current) do
-            |photo, rating, filename|
+          @restore = Restore.new(@photo, @photo.rating) do |photo, rating|
             photo.set_rating(rating)
-            load_photo(filename)
+            @file_list.set_current(photo.filename)
+            load_photo(@file_list.current)
           end
 
           @photo.set_rating(event.keyval - Gdk::Keyval::KEY_0)
@@ -506,10 +506,10 @@ class Tagger
     # Delete from files_list and remember the last file deleted for
     # crufty restore.
 
-    _restore_deleted = @file_list.delete_current
+    _restore_current = @file_list.delete_current
 
     @restore = Restore.new do
-      restore_photo(_moved_files, _restore_deleted)
+      restore_photo(_moved_files, _restore_current)
     end
 
     load_photo(@file_list.current)
@@ -531,7 +531,7 @@ class Tagger
 
   # XXX this is super-crufty.
   #
-  def restore_photo(moved_files, restore_deleted)
+  def restore_photo(moved_files, restore_current)
     moved_files.each do |name, deleted|
       File.rename(deleted, name)
       # If there is a database entry for this file then make sure
@@ -546,7 +546,7 @@ class Tagger
     # XXX It would be cleaner just to do set_filename and have it
     # reload the directory.  It should be performant.
 
-    restore_deleted.call
+    restore_current.call
 
     load_photo(@file_list.current)
   end
@@ -636,10 +636,10 @@ class Tagger
     # Set things up so the file can be restored with restore.
 
     _moved_files = [[@photo.filename, deleted_filename]]
-    _restore_deleted = @file_list.fake_delete_current
+    _restore_current = @file_list.restore_current
 
     @restore = Restore.new do
-      restore_photo(_moved_files, _restore_deleted)
+      restore_photo(_moved_files, _restore_current)
     end
 
     # Show the transformed photo.
