@@ -266,13 +266,21 @@ class Tagger
         end
         true
       when Gdk::Keyval::KEY_9
-        @photo_window.set_scale(1)
-        true
+        if !tagging?
+          @photo_window.set_scale(1)
+          true
+        else
+          false
+        end
       when Gdk::Keyval::KEY_0
-        @photo_window.set_scale(:fit)
-        true
+        if !tagging?
+          @photo_window.set_scale(:fit)
+          true
+        else
+          false
+        end
       when Gdk::Keyval::KEY_1 .. Gdk::Keyval::KEY_5
-        if @photo
+        if @photo && !tagging?
           @restore = Restore.new(@photo, @photo.rating, @file_list.current) do
             |photo, rating, filename|
             photo.set_rating(rating)
@@ -289,8 +297,10 @@ class Tagger
           else
             show_rating
           end
+          true
+        else
+          false
         end
-        true
       end
     end
 
@@ -301,6 +311,10 @@ class Tagger
 
     #@window.maximize
     @window.show_all
+  end
+
+  def tagging?
+    @tag_entry.has_focus? && @tag_entry.text != ""
   end
 
   # The tag TreeViews are all nearly the same, so create them here.
