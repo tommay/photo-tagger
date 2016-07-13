@@ -3,7 +3,7 @@
 class Restore
   def self.new(*args, &block)
     lambda do
-      block.call(args)
+      block.call(*args)
     end
   end
 end
