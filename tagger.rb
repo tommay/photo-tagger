@@ -40,7 +40,7 @@ class Tagger
     #applied_tags.headers_visible = true
 
     @available_tags_list, available_tags = create_treeview("Available tags")
-    @directory_tags_list, directory_tags = create_treeview("Directory tags")
+    @directory_tags_list, @directory_tags = create_treeview("Directory tags")
 
     # Searching a Gtk::ListStore is noticeably slow, especially if the
     # item isn't found or is near the end of the list.  So maintain an
@@ -112,7 +112,7 @@ class Tagger
       o.scrollable = true
     end
 
-    [["Dir", directory_tags], ["All", available_tags]].each do |name, treeview|
+    [["Dir", @directory_tags], ["All", available_tags]].each do |name, treeview|
       scrolled = Gtk::ScrolledWindow.new.tap do |o|
         o.hscrollbar_policy = :never
         o.vscrollbar_policy = :automatic
@@ -172,7 +172,7 @@ class Tagger
       add_tag(tag)
     end
 
-    directory_tags.signal_connect("row-activated") do |widget, path, column|
+    @directory_tags.signal_connect("row-activated") do |widget, path, column|
       tag = widget.model.get_iter(path)[0]
       add_tag(tag)
     end
@@ -181,7 +181,7 @@ class Tagger
     # move the focus to the @tag_entry instead of making the user do
     # it manually after realizing @tag_entry isn't focused.
 
-    [applied_tags, available_tags, directory_tags].each do |treeview|
+    [applied_tags, available_tags, @directory_tags].each do |treeview|
       treeview.signal_connect("key-press-event") do |widget, event|
         if event.string >= "a" && event.string <= "z"
           @tag_entry.grab_focus
@@ -481,6 +481,7 @@ class Tagger
     Photo.all(directory: @file_list.directory).tags.each do |tag|
       @directory_tags_list.append[0] = tag.tag
     end
+    restore_scroll_when_idle(@directory_tags)
   end
 
   # XXX Wow this is ugly.
@@ -728,6 +729,21 @@ class Tagger
           load_photo(filename)
         end
       end
+    end
+  end
+
+  def restore_scroll_when_idle(scrolled)
+    adjustment = scrolled.vadjustment
+    restore_scroll = Restore.new(adjustment.value) do |value|
+      adjustment.set_value(value)
+    end
+    when_idle(&restore_scroll)
+  end
+
+  def when_idle(&block)
+    id = GLib::Idle.add do
+      block.call
+      GLib::Source.remove(id)
     end
   end
 end
