@@ -53,23 +53,22 @@ class Tagger
       # The completion list intentionally uses all tags, instead of
       # using the list selected in the notebook tab.  This seems more
       # useful.  Time will tell.
-      @tag_completion = Gtk::EntryCompletion.new.tap do |o|
+      tag_completion = Gtk::EntryCompletion.new.tap do |o|
         o.model = @available_tags_list
         o.text_column = 0
         o.inline_completion = true
         o.popup_completion = true
         o.popup_single_match = false
       end
-      o.completion = @tag_completion
+      o.completion = tag_completion
+
+      # XXX what I want is to click on a completion in the popup to
+      # set the tag, but iter is null here.
+
+      #tag_completion.signal_connect("match-selected") do |widget, model, iter|
+      #  puts "Got #{iter[0]}"
+      #end
     end
-
-    # XXX what I want is to click on a completion in the popup to set the tag,
-    # but iter isn't working here.
-
-    #@tag_completion.signal_connect("match-selected") do |widget, model, iter|
-    #  puts "Got #{iter[0]}"
-    #  false
-    #end
 
     @photo_window = PhotoWindow.new
 
