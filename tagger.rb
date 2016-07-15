@@ -35,12 +35,11 @@ class Tagger
     # in the order they're added at first.  XXX might want to add a column
     # to photo_tags for this.
 
-    @applied_tags_list, applied_tags =
-      create_treeview("Applied tags", sorted: false)
+    @applied_tags = create_treeview("Applied tags", sorted: false)
     #applied_tags.headers_visible = true
 
-    @available_tags_list, available_tags = create_treeview("Available tags")
-    @directory_tags_list, @directory_tags = create_treeview("Directory tags")
+    @available_tags = create_treeview("Available tags")
+    @directory_tags = create_treeview("Directory tags")
 
     # Searching a Gtk::ListStore is noticeably slow, especially if the
     # item isn't found or is near the end of the list.  So maintain an
@@ -54,7 +53,7 @@ class Tagger
       # using the list selected in the notebook tab.  This seems more
       # useful.  Time will tell.
       tag_completion = Gtk::EntryCompletion.new.tap do |o|
-        o.model = @available_tags_list
+        o.model = @available_tags.model
         o.text_column = 0
         o.inline_completion = true
         o.popup_completion = true
@@ -91,7 +90,7 @@ class Tagger
       # I want the scrollbars on whenever the window has enough content.
       o.overlay_scrolling = false
     end
-    scrolled.add(applied_tags)
+    scrolled.add(@applied_tags)
 
     # Box up @rating, applied_tags's ScrollWindow, and @tag_entry.
 
@@ -112,7 +111,8 @@ class Tagger
       o.scrollable = true
     end
 
-    [["Dir", @directory_tags], ["All", available_tags]].each do |name, treeview|
+    [["Dir", @directory_tags], ["All", @available_tags]].each do
+      |name, treeview|
       scrolled = Gtk::ScrolledWindow.new.tap do |o|
         o.hscrollbar_policy = :never
         o.vscrollbar_policy = :automatic
@@ -154,7 +154,7 @@ class Tagger
       end
     end
 
-    applied_tags.signal_connect("button-release-event") do |widget, event|
+    @applied_tags.signal_connect("button-release-event") do |widget, event|
       if event.state == Gdk::ModifierType::BUTTON1_MASK
 #        byebug
 #        tag = widget.model.get_iter(path)[0]
@@ -162,12 +162,12 @@ class Tagger
       end
     end
 
-    applied_tags.signal_connect("row-activated") do |widget, path, column|
+    @applied_tags.signal_connect("row-activated") do |widget, path, column|
       tag = widget.model.get_iter(path)[0]
       remove_tag(tag)
     end
 
-    available_tags.signal_connect("row-activated") do |widget, path, column|
+    @available_tags.signal_connect("row-activated") do |widget, path, column|
       tag = widget.model.get_iter(path)[0]
       add_tag(tag)
     end
@@ -181,7 +181,7 @@ class Tagger
     # move the focus to the @tag_entry instead of making the user do
     # it manually after realizing @tag_entry isn't focused.
 
-    [applied_tags, available_tags, @directory_tags].each do |treeview|
+    [@applied_tags, @available_tags, @directory_tags].each do |treeview|
       treeview.signal_connect("key-press-event") do |widget, event|
         if event.string >= "a" && event.string <= "z"
           @tag_entry.grab_focus
@@ -324,7 +324,7 @@ class Tagger
         o.set_sort_column_id(0, Gtk::SortType::ASCENDING)
       end
     end
-    tags_view = Gtk::TreeView.new(tags_list).tap do |o|
+    Gtk::TreeView.new(tags_list).tap do |o|
       o.headers_visible = false
       o.enable_search = false
       o.selection.mode = Gtk::SelectionMode::NONE
@@ -344,7 +344,6 @@ class Tagger
       end
       o.append_column(column)
     end
-    [tags_list, tags_view]
   end
 
   def set_filename(filename)
@@ -445,41 +444,44 @@ class Tagger
   end
 
   def load_applied_tags
-    @applied_tags_list.clear
+    list = @applied_tags.model
+    list.clear
     if @photo
       @photo.tags.each do |tag|
-        @applied_tags_list.append[0] = tag.tag
+        list.append[0] = tag.tag
       end
     end
   end
 
   def load_available_tags
+    list = @available_tags.model
     # Disable sorting while the list is loaded.
-    sort_column_id = @available_tags_list.sort_column_id[1,2]
+    sort_column_id = list.sort_column_id[1,2]
     begin
-      #@available_tags_list.set_sort_column_id(-1, :ascending)
-      #@available_tags_list.set_default_sort_func{-1}
-      @available_tags_list.clear
+      #list.set_sort_column_id(-1, :ascending)
+      #list.set_default_sort_func{-1}
+      list.clear
       Tag.all.each do |tag|
-        @available_tags_list.append[0] = tag.tag
+        list.append[0] = tag.tag
         @available_tags_set << tag.tag
       end
     ensure
-      #@available_tags_list.set_sort_column_id(*sort_column_id)
+      #list.set_sort_column_id(*sort_column_id)
     end
   end
 
   def add_available_tag(tag)
     if !@available_tags_set.include?(tag)
-      @available_tags_list.append[0] = tag
+      @available_tags.model.append[0] = tag
       @available_tags_set << tag
     end
   end
 
   def load_directory_tags
-    @directory_tags_list.clear
+    list = @directory_tags.model
+    list.clear
     Photo.all(directory: @file_list.directory).tags.each do |tag|
-      @directory_tags_list.append[0] = tag.tag
+      list.append[0] = tag.tag
     end
     restore_scroll_when_idle(@directory_tags)
   end
