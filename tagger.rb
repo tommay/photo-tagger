@@ -383,10 +383,12 @@ class Tagger
         end
         (new_tags - current_tags).each do |tag|
           @photo.add_tag(tag)
+          add_recent_tag(tag)
         end
         @photo.save
       end
       load_applied_tags
+      load_recent_tags
     end
   end
 
