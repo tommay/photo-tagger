@@ -41,7 +41,7 @@ class Tagger
 
     @available_tags = create_treeview("Available tags")
     @directory_tags = create_treeview("Directory tags")
-    @recent_tags = create_treeview("Recent tags")
+    @recent_tags = create_treeview("Recent tags", sorted: false)
 
     # Searching a Gtk::ListStore is noticeably slow, especially if the
     # item isn't found or is near the end of the list.  So maintain an
