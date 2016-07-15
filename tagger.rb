@@ -22,6 +22,7 @@ class Tagger
   def initialize(args)
     init_ui
     @recent = SaveList.new([])
+    @recent_tags_hash = {}
     set_filename(args)
   end
 
@@ -40,6 +41,7 @@ class Tagger
 
     @available_tags = create_treeview("Available tags")
     @directory_tags = create_treeview("Directory tags")
+    @recent_tags = create_treeview("Recent tags")
 
     # Searching a Gtk::ListStore is noticeably slow, especially if the
     # item isn't found or is near the end of the list.  So maintain an
@@ -111,8 +113,9 @@ class Tagger
       o.scrollable = true
     end
 
-    [["Dir", @directory_tags], ["All", @available_tags]].each do
-      |name, treeview|
+    [["Dir", @directory_tags],
+     ["Rec", @recent_tags],
+     ["All", @available_tags]].each do |name, treeview|
       scrolled = Gtk::ScrolledWindow.new.tap do |o|
         o.hscrollbar_policy = :never
         o.vscrollbar_policy = :automatic
@@ -167,21 +170,19 @@ class Tagger
       remove_tag(tag)
     end
 
-    @available_tags.signal_connect("row-activated") do |widget, path, column|
-      tag = widget.model.get_iter(path)[0]
-      add_tag(tag)
-    end
-
-    @directory_tags.signal_connect("row-activated") do |widget, path, column|
-      tag = widget.model.get_iter(path)[0]
-      add_tag(tag)
+    [@available_tags, @directory_tags, @recent_tags].each do |tags_view|
+      tags_view.signal_connect("row-activated") do |widget, path, column|
+        tag = widget.model.get_iter(path)[0]
+        add_tag(tag)
+      end
     end
 
     # When we start typing with the focus on one of the treeviews,
     # move the focus to the @tag_entry instead of making the user do
     # it manually after realizing @tag_entry isn't focused.
 
-    [@applied_tags, @available_tags, @directory_tags].each do |treeview|
+    [@applied_tags, @available_tags, @directory_tags, @recent_tags].each do
+      |treeview|
       treeview.signal_connect("key-press-event") do |widget, event|
         if event.string >= "a" && event.string <= "z"
           @tag_entry.grab_focus
@@ -433,6 +434,8 @@ class Tagger
       load_applied_tags
       add_available_tag(string)
       load_directory_tags
+      add_recent_tag(string)
+      load_recent_tags
     end
   end
 
@@ -484,6 +487,19 @@ class Tagger
       list.append[0] = tag.tag
     end
     restore_scroll_when_idle(@directory_tags)
+  end
+
+  def add_recent_tag(string)
+    @recent_tags_hash.delete(string)
+    @recent_tags_hash[string] = true
+  end
+
+  def load_recent_tags
+    list = @recent_tags.model
+    list.clear
+    @recent_tags_hash.keys.reverse_each do |tag|
+      list.append[0] = tag
+    end
   end
 
   # XXX Wow this is ugly.
