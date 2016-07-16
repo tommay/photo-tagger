@@ -13,13 +13,17 @@ options = Trollop::options do
   opt :null, "Same as --nul"
   opt :tags, "Show files' tags"
   opt :ugly, "Show files' tags in tag -a ... format"
+  opt :directories, "List only directories containing the files"
   opt :expr, "Expression to search for", type: String
   conflicts :nul, :tags, :ugly
   conflicts :null, :tags, :ugly
+  conflicts :directories, :tags, :ugly
   stop_on_unknown
 end
 
 terminator = (options.nul || options.null) ? "\0" : "\n"
+
+@directories = {}
 
 # Lexer for PrattParser to create the Photo collection based on a
 # tag/date expression.
@@ -230,6 +234,14 @@ else
   end
 
   filenames.sort.each do |filename|
-    print "#{filename}#{terminator}"
+    if !options.directories
+      puts "#{filename}#{terminator}"
+    else
+      dirname = File.dirname(filename)
+      if !@directories[dirname]
+        @directories[dirname] = true
+        puts dirname
+      end
+    end
   end
 end
