@@ -21,9 +21,15 @@ require_relative "restore"
 class Tagger
   def initialize(args)
     init_ui
+
     @recent = SaveList.new([])
+
     @recent_tags_hash = {}
-    set_filename(args)
+
+    @args = !args.empty? ? args : ["."]
+    @narg = 0
+
+    set_filename(@args[@narg])
   end
 
   def init_ui
@@ -201,6 +207,10 @@ class Tagger
         prev_photo
       when Gdk::Keyval::KEY_Right
         next_photo
+      when Gdk::Keyval::KEY_Up
+        prev_arg
+      when Gdk::Keyval::KEY_Down
+        next_arg
       when Gdk::Keyval::KEY_Delete
         @photo && delete_photo
       when Gdk::Keyval::KEY_d
@@ -290,11 +300,13 @@ class Tagger
           @photo.set_rating(event.keyval - Gdk::Keyval::KEY_0)
 
           if event.state != Gdk::ModifierType::CONTROL_MASK
+            # Move to the next unrated photo, for quickly rating photos.
             next_photo do |filename|
               photo = import_photo(filename)
               !photo.rating
             end
           else
+            # Stay on the current photo, just show the new rating.
             show_rating
           end
           true
@@ -417,6 +429,15 @@ class Tagger
 
   def prev_directory
     next_directory(-1)
+  end
+
+  def next_arg(delta = 1)
+    @narg = (@narg + delta) % @args.size
+    set_filename(@args[@narg])
+  end
+
+  def prev_arg
+    next_arg(-1)
   end
 
   def show_filename

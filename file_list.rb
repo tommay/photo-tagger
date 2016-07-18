@@ -2,32 +2,21 @@ require_relative "restore"
 
 class FileList
   def initialize(filename)
-    if filename.is_a?(Array) && filename.size == 1
-      filename = filename[0]
-    end
-
-    if filename.is_a?(Array)
-      @filenames = filename.select do |f|
-        Files.image_file?(f) && File.exist?(f)
-      end.map{|f| Pathname.new(f).realpath.to_s}
+    realpath = Pathname.new(filename).realpath.to_s
+    case
+    when File.directory?(realpath)
+      @directory = realpath
+      @filenames = Files.for_directory(@directory)
       @nfile = 0
+    when File.exist?(realpath) && Files.image_file?(realpath)
+      @directory = File.dirname(realpath)
+      @filenames = Files.for_directory(@directory)
+      @nfile = @filenames.find_index(realpath)
     else
-      realpath = Pathname.new(filename).realpath.to_s
-      case
-      when File.directory?(realpath)
-        @directory = realpath
-        @filenames = Files.for_directory(@directory)
-        @nfile = 0
-      when File.exist?(realpath) && Files.image_file?(realpath)
-        @directory = File.dirname(realpath)
-        @filenames = Files.for_directory(@directory)
-        @nfile = @filenames.find_index(realpath)
-      else
-        # XXX
-        raise "Ugh."
-        @filenames = []
-        @nfile = 0
-      end
+      # XXX
+      raise "Ugh."
+      @filenames = []
+      @nfile = 0
     end
   end
 
