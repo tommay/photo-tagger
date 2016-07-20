@@ -20,7 +20,9 @@ require_relative "restore"
 
 class Tagger
   def initialize(args)
+    GC.start
     init_ui
+    byebug
 
     @recent = SaveList.new([])
 
