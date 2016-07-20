@@ -31,6 +31,8 @@ class Tagger
     @args = !args.empty? ? args : ["."]
     @narg = 0
 
+    @mark = Mark.new
+
     set_filename(@args[@narg])
   end
 
@@ -215,6 +217,7 @@ class Tagger
         next_arg
       when Gdk::Keyval::KEY_Delete
         @photo && delete_photo
+        @mark.clear
       when Gdk::Keyval::KEY_d
         if event.state == Gdk::ModifierType::CONTROL_MASK
           switch_to_from_deleted_directory
@@ -241,6 +244,20 @@ class Tagger
       when Gdk::Keyval::KEY_p
         if event.state == Gdk::ModifierType::CONTROL_MASK
           prev_directory
+          true
+        end
+      when Gdk::Keyval::KEY_space
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          @mark.set(@file_list.current)
+          true
+        end
+      when Gdk::Keyval::KEY_x
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          mark = @mark.get
+          if mark
+            @mark.set(@file_list.current)
+            set_filename(mark)
+          end
           true
         end
       when Gdk::Keyval::KEY_6
@@ -788,6 +805,20 @@ class Tagger
       block.call
       GLib::Source.remove(id)
     end
+  end
+end
+
+class Mark
+  def set(filename)
+    @mark = filename
+  end
+
+  def get
+    @mark
+  end
+
+  def clear
+    @mark = nil
   end
 end
 
