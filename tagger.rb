@@ -14,6 +14,7 @@ require_relative "photo_window"
 require_relative "files"
 require_relative "file_list"
 require_relative "importer"
+require_relative "exporter"
 require_relative "savelist"
 require_relative "entry_dialog"
 require_relative "restore"
@@ -278,6 +279,11 @@ class Tagger
       when Gdk::Keyval::KEY_m
         if event.state == Gdk::ModifierType::CONTROL_MASK
           @photo && move_photo_dialog
+          true
+        end
+      when Gdk::Keyval::KEY_e
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          @photo && Exporter.export_photo_to_sidecar(@photo)
           true
         end
       when Gdk::Keyval::KEY_comma
