@@ -286,6 +286,14 @@ class Tagger
           @photo && Exporter.export_photo_to_sidecar(@photo)
           true
         end
+      when Gdk::Keyval::KEY_c
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          @photo && Gtk::Clipboard.get(Gdk::Selection::CLIPBOARD).tap do |c|
+            c.set_text(@photo.filename)
+            c.store
+          end
+          true
+        end
       when Gdk::Keyval::KEY_comma
         if event.state == Gdk::ModifierType::CONTROL_MASK
           rotate_left
