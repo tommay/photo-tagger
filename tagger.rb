@@ -210,15 +210,20 @@ class Tagger
       case event.keyval
       when Gdk::Keyval::KEY_Left
         prev_photo
+        true
       when Gdk::Keyval::KEY_Right
         next_photo
+        true
       when Gdk::Keyval::KEY_Up
         prev_arg
+        true
       when Gdk::Keyval::KEY_Down
         next_arg
+        true
       when Gdk::Keyval::KEY_Delete
         @photo && delete_photo
         @mark.clear
+        true
       when Gdk::Keyval::KEY_d
         if event.state == Gdk::ModifierType::CONTROL_MASK
           switch_to_from_deleted_directory
