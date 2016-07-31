@@ -14,6 +14,7 @@ def clean(directory)
     FileUtils.remove_dir(deleted)
   end
   %x{tag purge -r #{directory}}
+  %x{find #{directory} -type d -empty -delete}
 end
 
 ARGV.each do |directory|
