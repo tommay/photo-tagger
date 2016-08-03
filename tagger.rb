@@ -281,6 +281,15 @@ class Tagger
           restore_last
           true
         end
+      when Gdk::Keyval::KEY_u
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          # Move to the next untagged photo.
+          next_photo do |filename|
+            photo = import_photo(filename)
+            photo.tags.empty?
+          end
+          true
+        end
       when Gdk::Keyval::KEY_m
         if event.state == Gdk::ModifierType::CONTROL_MASK
           @photo && move_photo_dialog
