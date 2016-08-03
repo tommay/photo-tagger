@@ -218,9 +218,7 @@ if options.tags || options.ugly
     [photo.filename, photo.tags.map{|t|t.tag}.sort]
   end
 
-  photos = photos.sort_by{|p| p[0]}
-
-  photos.each do |photo|
+  photos.sort.each do |photo|
     if options.ugly
       photo[1].each { |t| print " -a #{quote(t)}" }
       puts " #{quote(photo[0])}"
