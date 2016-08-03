@@ -40,19 +40,16 @@ module Files
   # numerics.  The arrays can then be compared, and numbers will sort
   # in numeric order instead of alphabetic, e.g., "spud_9" sorts
   # before "spud_10".  "spud_1" compares equal to "spud_01" but that
-  # shouldn't be a problem.  But if it is, equal numbers are now
-  # ordered by the length of their generating string. so that shorter
-  # strings sort first.
+  # shouldn't be a problem.  But to be sure, all strings without
+  # leading zeros are ordered first, then strings are ordered in
+  # groups of equal length.
   #
   def self.name_split(string)
-    scanner = StringScanner.new(string)
-    [].tap do |result|
-      while !scanner.eos?
-        result << scanner.scan(%r{([^0-9]*)})
-        sub = scanner.scan(%r{([0-9]+)})
-        if sub
-          result << [sub.to_i, sub.size]
-        end
+    string.split(/([0-9]+)/).map do |s|
+      if s =~ /(0)?[0-9]/
+        [!$1 ? 0 : s.size, s.to_i]
+      else
+        s
       end
     end
   end
