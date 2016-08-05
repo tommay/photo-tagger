@@ -233,12 +233,12 @@ else
 
   filenames.sort.each do |filename|
     if !options.directories
-      puts "#{filename}#{terminator}"
+      print "#{filename}#{terminator}"
     else
       dirname = File.dirname(filename)
       if !@directories[dirname]
         @directories[dirname] = true
-        puts dirname
+        print "#{dirname}#{terminator}"
       end
     end
   end
