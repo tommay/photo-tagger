@@ -206,7 +206,7 @@ class Tagger
     load_available_tags
 
     @window.signal_connect("key-press-event") do |widget, event|
-      # Gdk::Keyval.to_name(event.keyval)
+      # puts Gdk::Keyval.to_name(event.keyval)
       case event.keyval
       when Gdk::Keyval::KEY_Left
         prev_photo
@@ -349,14 +349,7 @@ class Tagger
         end
       when Gdk::Keyval::KEY_1 .. Gdk::Keyval::KEY_5
         if @photo && !tagging?
-          @restore = Restore.new(@photo, @photo.rating) do |photo, rating|
-            photo.set_rating(rating)
-            @file_list.set_current(photo.filename)
-            load_photo(@file_list.current)
-          end
-
-          @photo.set_rating(event.keyval - Gdk::Keyval::KEY_0)
-
+          rate_photo(@photo, event.keyval - Gdk::Keyval::KEY_0)
           if event.state != Gdk::ModifierType::CONTROL_MASK
             # Move to the next unrated photo, for quickly rating photos.
             next_photo do |filename|
@@ -370,6 +363,12 @@ class Tagger
           true
         else
           false
+        end
+      when Gdk::Keyval::KEY_minus
+        if @photo && !tagging?
+          rate_photo(@photo, nil)
+          show_rating
+          true
         end
       end
     end
@@ -385,6 +384,15 @@ class Tagger
 
   def tagging?
     @tag_entry.has_focus? && @tag_entry.text != ""
+  end
+
+  def rate_photo(photo, rating)
+    @restore = Restore.new(photo, photo.rating) do |photo, rating|
+      photo.set_rating(rating)
+      @file_list.set_current(photo.filename)
+      load_photo(@file_list.current)
+    end
+    photo.set_rating(rating)
   end
 
   # The tag TreeViews are all nearly the same, so create them here.
