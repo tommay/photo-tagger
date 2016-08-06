@@ -291,9 +291,17 @@ class Tagger
           true
         end
       when Gdk::Keyval::KEY_m
-        if event.state == Gdk::ModifierType::CONTROL_MASK
-          @photo && move_photo_dialog
-          true
+        # C-m: ask where to move the photo
+        # A-m: just move it to the last directory, but with date adjusted
+        if @photo
+          case event.state
+          when Gdk::ModifierType::CONTROL_MASK
+            move_photo_dialog(ask: true)
+            true
+          when Gdk::ModifierType::MOD1_MASK
+            move_photo_dialog(ask: false)
+            true
+          end
         end
       when Gdk::Keyval::KEY_e
         if event.state == Gdk::ModifierType::CONTROL_MASK
@@ -778,7 +786,7 @@ class Tagger
     end
   end
 
-  def move_photo_dialog
+  def move_photo_dialog(ask:)
     photo_date = @photo.taken_time.split.first
     last =
       if @move_last_directory == @file_list.directory
@@ -787,11 +795,8 @@ class Tagger
         @file_list.directory
       end
     last = last.sub(/\d{4}-\d{2}-\d{2}/, photo_date)
-    EntryDialog.new(
-      title: "Move To", parent: @window,
-      text: last,
-      width_chars: @file_list.directory.size + 20,
-      insert_text: photo_date) do |text|
+
+    block = lambda do |text|
       begin
         move_photo(@photo, text)
         @move_last = text
@@ -806,6 +811,18 @@ class Tagger
         dialog.run
         dialog.destroy
       end
+    end
+
+    if ask
+      EntryDialog.new(
+        title: "Move To", parent: @window,
+        text: last,
+        width_chars: @file_list.directory.size + 20,
+        insert_text: photo_date) do |text|
+        block.call(text)
+      end
+    else
+      block.call(last)
     end
   end
 
