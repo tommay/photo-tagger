@@ -779,17 +779,19 @@ class Tagger
   end
 
   def move_photo_dialog
+    photo_date = @photo.taken_time.split.first
     last =
       if @move_last_directory == @file_list.directory
         @move_last
       else
         @file_list.directory
       end
+    last = last.sub(/\d{4}-\d{2}-\d{2}/, photo_date)
     EntryDialog.new(
       title: "Move To", parent: @window,
       text: last,
       width_chars: @file_list.directory.size + 20,
-      insert_text: @photo.taken_time.split.first) do |text|
+      insert_text: photo_date) do |text|
       begin
         move_photo(@photo, text)
         @move_last = text
