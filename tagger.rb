@@ -239,7 +239,7 @@ class Tagger
         end
       when Gdk::Keyval::KEY_v
         if event.state == Gdk::ModifierType::CONTROL_MASK
-          rename_directory_dialog
+          @photo && rename_directory_dialog
           true
         end
       when Gdk::Keyval::KEY_n
@@ -788,7 +788,8 @@ class Tagger
     EntryDialog.new(
       title: "Move To", parent: @window,
       text: last,
-      width_chars: @file_list.directory.size + 20) do |text|
+      width_chars: @file_list.directory.size + 20,
+      insert_text: @photo.taken_time.split.first) do |text|
       begin
         move_photo(@photo, text)
         @move_last = text
