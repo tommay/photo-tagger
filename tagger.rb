@@ -431,6 +431,9 @@ class Tagger
   end
 
   def load_photo(filename)
+    if @photo
+      save_recent_tags
+    end
     @photo = filename && import_photo(filename)
     load_applied_tags
     load_directory_tags
@@ -472,7 +475,6 @@ class Tagger
 
   def next_photo(delta = 1, &block)
     if @photo
-      save_recent_tags
       load_photo(@file_list.next(delta, &block))
     end
   end
