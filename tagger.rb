@@ -466,7 +466,7 @@ class Tagger
     if @photo
       current_tags = @photo.tags.map {|t| t.tag}
       new_tags = @recent.send(older_or_newer, current_tags)
-      Photo.transaction do
+      Photo.db.transaction do
         (current_tags - new_tags).each do |tag|
           @photo.remove_tag(tag)
         end
@@ -474,7 +474,6 @@ class Tagger
           @photo.add_tag(tag)
           add_recent_tag(tag)
         end
-        @photo.save
       end
       load_applied_tags
       load_recent_tags
@@ -563,7 +562,7 @@ class Tagger
       #list.set_sort_column_id(-1, :ascending)
       #list.set_default_sort_func{-1}
       list.clear
-      Tag.all.each do |tag|
+      Tag.each do |tag|
         list.append[0] = tag.tag
         @available_tags_set << tag.tag
       end
@@ -582,7 +581,7 @@ class Tagger
   def load_directory_tags
     list = @directory_tags.model
     list.clear
-    Photo.all(directory: @file_list.directory).tags.each do |tag|
+    Photo.where(directory: @file_list.directory).tags.each do |tag|
       list.append[0] = tag.tag
     end
     restore_scroll_when_idle(@directory_tags)
@@ -711,10 +710,8 @@ class Tagger
     end
     File.rename(@file_list.directory, new_directory)
 
-    Photo.transaction do
-      Photo.all(directory: @file_list.directory)
-        .update(directory: new_directory)
-    end
+    Photo.where(directory: @file_list.directory)
+      .update(directory: new_directory)
 
     set_filename(File.join(new_directory, @photo.basename))
   end
@@ -842,16 +839,15 @@ class Tagger
 
   def save_last
     if @photo
-      Last.first_or_new(directory: @file_list.directory).tap do |last|
+      Last.find_or_create(directory: @file_list.directory) do |last|
         last.filename = @photo.filename
-        last.save
-      end
+      end.update(filename: @photo.filename)
     end
   end
 
   def restore_last
     if @photo
-      Last.get(@photo.directory)&.tap do |last|
+      Last[@photo.directory]&.tap do |last|
         filename = last.filename
         if File.exist?(filename)
           set_filename(filename)

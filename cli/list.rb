@@ -20,17 +20,17 @@ end
 
 case
 when options.files
-  Photo.all.map do |photo|
+  Photo.map do |photo|
     photo.filename
   end.sort.each do |filename|
     puts filename
   end
 when options.directories
-  Photo.all(:fields => [:directory], :unique => true, :order => [:directory.asc]).each do |photo|
+  Photo.distinct.select(:directory).order(:directory).each do |photo|
     puts "#{photo.directory}"
   end
 when options.tags
-  Tag.all(order: [:created_at.desc]).each do |tag|
+  Tag.order(Sequel.desc(:created_at)).each do |tag|
     puts "%-20s %s" % [tag.tag, tag.created_at]
   end
 end

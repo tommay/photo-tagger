@@ -43,7 +43,9 @@ module Importer
 
     if copy_tags
       photo.identical.each do |identical|
-        photo.tags += identical.tags
+        identical.tags.each do |tag|
+          photo.add_tag(tag)
+        end
         if !photo.rating
           photo.rating = identical.rating
         end

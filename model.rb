@@ -1,65 +1,125 @@
 #!/usr/bin/env ruby
 
-require "data_mapper"
-require "gtk3"
+require "sequel"
+require "logger"
+require "gtk3"                  # For Gdk::Pixbuf
 require "pathname"
 require "digest"
 require "exiv2"
 require "byebug"
 
-# XXX Use Integer instead of DateTime?
+module Model
+  # This makes association datasets "chainable" which makes tagged.rb
+  # comceptually simpler, more like data_mapper.
 
-class Photo
-  include DataMapper::Resource
+  Sequel::Model.plugin :dataset_associations
 
-  property :id, Serial
-  property :directory, String, length: 500, required: true, unique_index: :name
-  property :basename, String, length: 500, required: true, unique_index: :name
-  property :sha1, String, length: 28, required: true, index: :sha1
-  property :filedate, DateTime, required: true # Date file was modified.
-  property :taken_time, String, length: 100
-  property :rating, Integer
-  property :created_at, DateTime, required: true # Date this row was updated.
+  def self.setup(file)
+    # Whether we need to create the schema.
 
-  has n, :tags, through: Resource
+    need_schema = !File.exist?(file)
 
-  # XXX can this cascade automatically?  XXX This is craxy.  This
-  # isn't even called unless there are no constraints blocking the
-  # destroy, so photo_tags must be deleted manually ahead of time.
-  # before :destroy do
-  #   photo_tags.each(&:destroy)
-  # end
-  def destroy
-    # This is horrible.  Instead of cascade deleting the photo_tags, I
-    # have to delete them manually then reload otherwise dm thinks
-    # there are still photo_tags that will be left hanging.
-    # XXX DM isn't setting up the schema with foreign keys, WTF?
-    Photo.transaction do
-      photo_tags.each(&:destroy)
+    # A Sqlite3 connection to a persistent database
+
+    Sequel.connect(
+      "sqlite:#{file}",
+      logger: Logger.new(STDOUT).tap do |logger|
+        logger.level = Logger::WARN
+      end
+    ).tap do |db|
+      db.use_timestamp_timezones = true
+      db.run("pragma journal_mode = truncate")
+
+      if need_schema
+        create_schema(db)
+      end
     end
-    reload
-    super
   end
 
+  def self.create_schema(db)
+    db.create_table :photos do
+      primary_key :id
+      column :directory, String, size: 500, null: false
+      column :basename, String, size: 500, null: false
+      column :sha1, String, size: 28, null: false
+      column :filedate, DateTime, null: false # Date file was modified.
+      column :taken_time, String, size: 100, null: true
+      column :rating, Integer, null: true
+      column :created_at, DateTime, null: false # Date this row was updated.
+
+      unique [:directory, :basename]
+      index :sha1
+    end
+
+    db.create_table :tags do
+      primary_key :id
+      column :tag, String, size: 100, null: false
+      column :created_at, DateTime, null: false
+
+      unique :tag
+    end
+
+    # The photos/tags join table, cf. create_join_table
+    #
+    db.create_table :photos_tags do
+      column :photo_id, Integer, null: false
+      column :tag_id, Integer, null: false
+
+      primary_key [:photo_id, :tag_id]
+      unique [:tag_id, :photo_id]
+
+      foreign_key [:photo_id], :photos, on_delete: :cascade
+      foreign_key [:tag_id], :tags, on_delete: :cascade
+    end
+
+    db.create_table :lasts do
+      column :directory, String, size: 500, primary_key: true
+      column :filename, String, size: 500, null: false
+    end
+  end
+end
+
+# Grovel up the directory tree looking for a .taggerdb file to tell us
+# what directory to use.  If not found, get it from the environment or
+# use a default.
+
+get_db = lambda do |dir|
+  if dir == "/"
+    "/home/tom/tagger/tags.db"
+  else
+    file = File.join(dir, ".taggerdb")
+    if File.exist?(file)
+      File.read(file).chomp
+    else
+      get_db.call(File.dirname(dir))
+    end
+  end
+end
+
+db_file = ENV["TAGGER_DB"] || get_db.call(Dir.pwd)
+
+Model.setup(db_file)
+
+class Photo < Sequel::Model
+  many_to_many :tags
+  # Don't need this with on_delete cascade.
+  plugin :association_dependencies, tags: :nullify
+
   def self.find_or_create(filename, &block)
-    find_or_new(filename).tap do |photo|
-      if photo.new?
-        # Give the caller first chance to fill in values from xmp or
-        # wherever.
+    super(split_filename(filename)) do |photo|
+      # Give the caller first chance to fill in values from xmp or
+      # wherever.
 
-        block&.call(photo)
+      block&.call(photo)
 
-        # Now set anything the caller didn't.
+      # Now set anything the caller didn't.
 
-        photo.filedate ||= File.mtime(photo.filename)
-        photo.created_at ||= Time.now
-        photo.taken_time ||= extract_time(photo.filename)
+      photo.filedate ||= File.mtime(photo.filename)
+      photo.created_at ||= Time.now
+      photo.taken_time ||= extract_time(photo.filename)
 
-        if !photo.sha1
-          photo.set_sha1
-        end
-
-        photo.save
+      if !photo.sha1
+        photo.set_sha1
       end
     end
   end
@@ -105,21 +165,16 @@ class Photo
     end
   end
 
-  def self.find_or_new(filename)
-    realpath = Pathname.new(filename).realpath
-    directory = realpath.dirname.to_s
-    basename = realpath.basename.to_s
-
-    first_or_new(directory: directory, basename: basename)
+  def self.find(filename)
+    super(filename.is_a?(String) ? split_filename(filename) : filename)
   end
 
-  def self.find(filename)
-    photo = find_or_new(filename)
-    if !photo.new?
-      photo
-    else
-      nil
-    end
+  def self.split_filename(filename)
+    realpath = Pathname.new(filename).realpath
+    {
+      directory: realpath.dirname.to_s,
+      basename: realpath.basename.to_s,
+    }
   end
 
   def filename
@@ -127,37 +182,30 @@ class Photo
   end
 
   def identical
-    Photo.all(sha1: self.sha1, :id.not => self.id)
+    Photo.where(sha1: self.sha1).exclude(:id => self.id)
   end
 
-  def add_tag(string)
-    # XXX I think this is supposed to work, but it only works if the tag
-    # doesn't exist in which case it creates the tag and links it, else
-    # it does nothing.
-    # self.tags.first_or_create(tag: string)
-    # So do it the hard way.
-    tag = Tag.ensure(string)
-    if !self.tags.include?(tag)
-      self.tags << tag
-      self.save
-      #self.reload
-      true
+  def add_tag(tag)
+    if tag.is_a?(String)
+      tag = Tag.ensure(tag)
+      if !self.tags.include?(tag)
+        add_tag(tag)
+        true
+      end
+    else
+      super(tag)
     end
   end
 
-  def remove_tag(string)
-    tag = self.tags.first(tag: string)
-    if tag
-      self.tags.delete(tag)
-      self.save
-      # Not sure why this is necessary, but it wors around the following:
-      # - add_tag("x"): INSERT executed
-      # - remove_tag("x"): DELETE executed
-      # - add_tag("x"): no INSERT executed
-      # DataMapper seems to think tag "x" is still applied and no INSERT
-      # is required.
-      self.reload
-      true
+  def remove_tag(tag)
+    if tag.is_a?(String)
+      tag = self.tags.detect{|t| t.tag == tag}
+      if tag
+        remove_tag(tag)
+        true
+      end
+    else
+      super(tag)
     end
   end
 
@@ -167,77 +215,19 @@ class Photo
   end
 end
 
-class Tag
-  include DataMapper::Resource
-
-  property :id, Serial
-  property :tag, String, length: 100, required: true, unique: true
-  property :created_at, DateTime #, required: true
-
-  has n, :photos, through: Resource
+class Tag < Sequel::Model
+  many_to_many :photos
+  # Don't need this with on_delete cascade.
+  plugin :association_dependencies, photos: :nullify
 
   def self.ensure(tag)
-    Tag.first_or_create({tag: tag}, {created_at: Time.now})
-  end
-end
-
-class Last
-  include DataMapper::Resource
-
-  property :directory, String, length: 5000, key: true
-  property :filename, String, length: 5000, required: true
-end
-
-# Throw exceptions instead of silently returning false.
-#
-DataMapper::Model.raise_on_save_failure = true
-
-# If you want the logs displayed you have to do this before the call to setup
-#
-DataMapper::Logger.new($stdout, :info)
-
-module Model
-  def self.setup(name, file)
-    # A Sqlite3 connection to a persistent database
-    #
-    DataMapper.setup(name, "sqlite://#{file}")
-
-    # XXX Not sure if this is per-repository or global.
-    DataMapper.repository(name) do
-      DataMapper.finalize
-    end
-
-    # Create the file+schema if it doesn't exist.
-    #
-    if !File.exist?(file)
-      DataMapper.repository(name) do
-        # XXX This is supposed to work but it only works for ;default.
-        # It may have something to so with the Model's
-        # default_repository_name.
-        DataMapper.auto_migrate!
-      end
+    Tag.find_or_create(tag: tag) do |t|
+      t.created_at = Time.now
     end
   end
 end
 
-# Grovel up the directory tree looking for a .taggerdb file to tell us
-# what directory to use.  If not found, get it from the environment or
-# use a default.
-
-get_db = lambda do |dir|
-  if dir == "/"
-    "/home/tom/tagger/tags.db"
-  else
-    file = File.join(dir, ".taggerdb")
-    if File.exist?(file)
-      File.read(file).chomp
-    else
-      get_db.call(File.dirname(dir))
-    end
-  end
+class Last < Sequel::Model
+  # Need this to allow first_or_create to set the directory column.
+  unrestrict_primary_key
 end
-
-db_file = ENV["TAGGER_DB"] || get_db.call(Dir.pwd)
-
-Model.setup(:default, db_file)
-Photo.repository.adapter.execute("pragma journal_mode = truncate")

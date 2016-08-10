@@ -16,23 +16,10 @@ options = Trollop::options do
   opt :destroy, "Delete unused tags", long: :delete, short: :d
 end
 
-# Is there a way to do ths that makes SQL do all the work and just
-# return the tags with no photos?  That's a job for an outer join and
-# the word "outer" doesn't appear in the source.
-
-Tag.all.each do |tag|
-  # This does one big select on photo_tags with the entire list of tag_ids.
-  # At least the tags get deleted without much extra work (only checking
-  # ithe contraint that they have no associated photos) which is surprising.
-  if tag.photo_tags.empty?
-    if options.destroy
-      tag.destroy
-    else
-      puts tag.tag
-    end
+Tag.left_join(:photo_tags, :tag_id => :id).where(photo_tags__tag_id: nil).each do |tag|
+  if options.destroy
+    tag.destroy
+  else
+    puts tag.tag
   end
 end
-
-# SELECT * FROM tags
-#   OUTER JOIN tag_photos ON tag_photos.tag_id = tags.tag_id
-#   WHERE tag_photos.tag_id IS NULL;

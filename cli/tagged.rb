@@ -66,7 +66,7 @@ class Lexer
     need_and = false
     Enumerator.new do |y|
       while !scanner.eos?
-        case scanner.scan(TOKENS)
+        case scanner.scan(TOKENS).tap {|x|byebug; 1}
         when nil
           raise "scan error at #{scanner.rest}"
         when /^\s+$/
@@ -130,37 +130,37 @@ class Lexer
   class LikeTagToken < PhotoToken
     def photos(tag)
       if tag =~ /%/
-        Tag.all(:tag.like => tag).photos
+        Tag.where(Sequel.like(:tag, tag)).photos
       else
-        Tag.all(:tag => tag).photos
+        Tag.where(tag: tag).photos
       end
     end
   end
 
   class LikeDateToken < PhotoToken
     def photos(date)
-      Photo.all(:taken_time.like => date + "%")
+      Photo.where(Sequel.like(:taken_time, date + "%"))
     end
   end
 
   class BeforeDateToken < PhotoToken
     def photos(date)
-      Photo.all(:taken_time.lt => date)
+      Photo.where{taken_time < date}
     end
   end
 
   class AfterDateToken < PhotoToken
     def photos(date)
-      Photo.all(:taken_time.gte => date)
+      Photo.where{taken_time >= date}
     end
   end
 
   class RatingToken < PhotoToken
     def photos(ratings)
       if ratings == ""
-        Photo.all(rating: nil)
+        Photo.where(rating: nil)
       else
-        Photo.all(rating: ratings.each_char.map{|c| c.to_i})
+        Photo.where(rating: ratings.each_char.map{|c| c.to_i})
       end
     end
   end
@@ -175,9 +175,9 @@ class Lexer
     end
   end
 
-  AndToken = BinaryOpToken(:&)
-  PlusToken = BinaryOpToken(:+)
-  ButNotToken = BinaryOpToken(:-)
+  AndToken = BinaryOpToken(:intersect)
+  PlusToken = BinaryOpToken(:union)
+  ButNotToken = BinaryOpToken(:except)
 
   class LeftParenToken < Token(1)
     def nud(parser)
@@ -204,7 +204,7 @@ expression = options.expr || ARGV.map do |arg|
   end
 end.join(" ")
 
-photos = PrattParser.new(Lexer.new(expression)).eval
+photos = PrattParser.new(Lexer.new(expression)).eval.all
 
 def quote(s)
   s.gsub(/\\/, "\\\\")

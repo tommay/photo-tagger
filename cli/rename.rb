@@ -20,27 +20,23 @@ end
 old_name = ARGV.shift
 new_name = ARGV.shift
 
-old_tag = Tag.first(tag: old_name)
+old_tag = Tag[tag: old_name]
 if !old_tag
   puts "tag not found: #{old_name}"
   exit 1
 end
 
-new_tag = Tag.first(tag: new_name)
+new_tag = Tag[tag: new_name]
 if !new_tag
   # No tag with the new name, so just change the old tag to the new name.
   old_tag.tag = new_name
   old_tag.save
 else
-  Photo.transaction do
+  Photo.db.transaction do
     # Add new_tag to old_tag's photos.
     old_tag.photos.each do |photo|
-      photo.tags << new_tag
-      photo.save
+      photo.add_tag(new_tag)
     end
-    # Destroy old_tag.
-    old_tag.photos.clear
-    old_tag.save
     old_tag.destroy
   end
 end
