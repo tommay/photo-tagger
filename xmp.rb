@@ -40,10 +40,7 @@ EOF
   def_attr = lambda do |name|
     define_method(:"get_#{name}") do
       description = @xmp.at_css("rdf|Description", NAMESPACES)
-      if description
-        attr = description.attribute_with_ns(name, NAMESPACES["tg"])
-        attr && attr.value
-      end
+      description&.attribute_with_ns(name, NAMESPACES["tg"])&.value
     end
 
     define_method(:"set_#{name}") do |value|

@@ -525,11 +525,11 @@ class Tagger
   end
 
   def show_photo
-    @photo_window.show_photo(@photo && @photo.filename)
+    @photo_window.show_photo(@photo&.filename)
   end
 
   def add_tag(string)
-    if @photo && @photo.add_tag(string)
+    if @photo&.add_tag(string)
       load_applied_tags
       add_available_tag(string)
       load_directory_tags
@@ -539,7 +539,7 @@ class Tagger
   end
 
   def remove_tag(string)
-    if @photo && @photo.remove_tag(string)
+    if @photo&.remove_tag(string)
       load_applied_tags
       load_directory_tags
     end
@@ -787,13 +787,13 @@ class Tagger
   end
 
   def move_photo_dialog(ask:)
-    photo_date = @photo.taken_time.split.first
     last =
       if @move_last_directory == @file_list.directory
         @move_last
       else
         @file_list.directory
       end
+    photo_date = @photo&.taken_time&.split&.first || ""
     last = last.sub(/\d{4}-\d{2}-\d{2}/, photo_date)
 
     block = lambda do |text|

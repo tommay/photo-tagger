@@ -47,7 +47,7 @@ class Photo
         # Give the caller first chance to fill in values from xmp or
         # wherever.
 
-        block && block.call(photo)
+        block&.call(photo)
 
         # Now set anything the caller didn't.
 
