@@ -19,12 +19,14 @@ def tag(filename, add, remove)
     filename, copy_tags: true, purge_identical_images: false,
     force_purge: false)
 
-  add.each do |tag|
-    photo.add_tag(tag)
-  end
+  Photo.db.transaction do
+    add.each do |tag|
+      photo.add_tag(tag)
+    end
 
-  remove.each do |tag|
-    photo.remove_tag(tag)
+    remove.each do |tag|
+      photo.remove_tag(tag)
+    end
   end
 end
 
