@@ -842,16 +842,16 @@ class Tagger
 
   def save_last
     if @photo
-      last = Last.first_or_new(directory: @file_list.directory)
-      last.filename = @photo.filename
-      last.save
+      Last.first_or_new(directory: @file_list.directory).tap do |last|
+        last.filename = @photo.filename
+        last.save
+      end
     end
   end
 
   def restore_last
     if @photo
-      last = Last.get(@photo.directory)
-      if last
+      Last.get(@photo.directory)&.tap do |last|
         filename = last.filename
         if File.exist?(filename)
           set_filename(filename)
