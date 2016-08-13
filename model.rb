@@ -187,13 +187,12 @@ class Photo < Sequel::Model
 
   def add_tag(tag)
     if tag.is_a?(String)
-      tag = Tag.ensure(tag)
+      add_tag(Tag.ensure(tag))
+    else
       if !self.tags.include?(tag)
-        add_tag(tag)
+        super(tag)
         true
       end
-    else
-      super(tag)
     end
   end
 
