@@ -14,7 +14,7 @@ module Files
   def self.for_directory(dirname)
     Dir[dirname ? File.join(dirname, "*") : "*"].select do |filename|
       image_file?(filename)
-    end.sort_by{|name| name_split(name)}
+    end.sort_by{|name| split_name(name)}
   end
 
   def self.image_files(filename, recurse)
@@ -40,14 +40,14 @@ module Files
   # numerics.  The arrays can then be compared, and numbers will sort
   # in numeric order instead of alphabetic, e.g., "spud_9" sorts
   # before "spud_10".  "spud_1" compares equal to "spud_01" but that
-  # shouldn't be a problem.  But to be sure, all strings without
-  # leading zeros are ordered first, then strings are ordered in
-  # groups of equal length.
+  # shouldn't be a problem.  But to be sure, equal numbers are orders
+  # by the length of their string, e.g., "1", "01", "001".  Not ideal
+  # but it shouldn't be a problem.
   #
-  def self.name_split(string)
+  def self.split_name(string)
     string.split(/([0-9]+)/).map do |s|
-      if s =~ /(0)?[0-9]/
-        [!$1 ? 0 : s.size, s.to_i]
+      if s =~ /[0-9]/
+        [s.to_i, s.size]
       else
         s
       end
