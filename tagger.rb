@@ -790,8 +790,10 @@ class Tagger
       else
         @file_list.directory
       end
-    photo_date = @photo&.taken_time&.split&.first || ""
-    last = last.sub(/\d{4}-\d{2}-\d{2}/, photo_date)
+    photo_date = @photo.taken_time&.split&.first
+    if photo_date
+      last = last.sub(/\d{4}-\d{2}-\d{2}/, photo_date)
+    end
 
     block = lambda do |text|
       begin
