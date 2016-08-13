@@ -66,7 +66,7 @@ class Lexer
     need_and = false
     Enumerator.new do |y|
       while !scanner.eos?
-        case scanner.scan(TOKENS).tap {|x|byebug; 1}
+        case scanner.scan(TOKENS)
         when nil
           raise "scan error at #{scanner.rest}"
         when /^\s+$/
