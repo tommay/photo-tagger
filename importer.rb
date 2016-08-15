@@ -52,8 +52,6 @@ module Importer
       end
     end
 
-    photo.save
-
     # If requested, purge identical images that no longer exist.  If
     # force_purge ten piurge them even if they do exist.
 
