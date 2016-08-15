@@ -1,7 +1,7 @@
 require "strscan"
 
 module Files
-  SUFFIXES = ["jpg", "png"].map do |suffix|
+  SUFFIXES = ["jpg", "png", "tif", "tiff"].map do |suffix|
     %r{\.#{suffix}$}i
   end
 
