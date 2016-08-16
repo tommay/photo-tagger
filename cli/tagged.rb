@@ -6,6 +6,7 @@ require "strscan"
 require "pratt_parser"
 require "byebug"
 require_relative "../model"
+require_relative "../files"
 
 options = Trollop::options do
   banner "Usage: #{$0} [-]tag..."
@@ -204,7 +205,9 @@ expression = options.expr || ARGV.map do |arg|
   end
 end.join(" ")
 
-photos = PrattParser.new(Lexer.new(expression)).eval.all
+photos = PrattParser.new(Lexer.new(expression)).eval.all.select do |p|
+  !Files.deleted?(p.directory)
+end
 
 def quote(s)
   s.gsub(/\\/, "\\\\")
