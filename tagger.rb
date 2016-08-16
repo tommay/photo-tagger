@@ -214,11 +214,6 @@ class Tagger
       when Gdk::Keyval::KEY_Right
         next_photo
         true
-      when Gdk::Keyval::KEY_0
-        if event.state == Gdk::ModifierType::CONTROL_MASK
-          load_photo(@file_list.first)
-          true
-        end
       when Gdk::Keyval::KEY_Up
         prev_arg
         true
@@ -362,11 +357,15 @@ class Tagger
           false
         end
       when Gdk::Keyval::KEY_0
-        if !tagging?
-          @photo_window.set_scale(:fit)
+        case event.state
+        when Gdk::ModifierType::CONTROL_MASK
+          load_photo(@file_list.first)
           true
         else
-          false
+          if !tagging?
+            @photo_window.set_scale(:fit)
+            true
+          end
         end
       when Gdk::Keyval::KEY_1 .. Gdk::Keyval::KEY_5
         if @photo && !tagging?
