@@ -214,6 +214,11 @@ class Tagger
       when Gdk::Keyval::KEY_Right
         next_photo
         true
+      when Gdk::Keyval::KEY_0
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          load_photo(@file_list.first)
+          true
+        end
       when Gdk::Keyval::KEY_Up
         prev_arg
         true

@@ -46,6 +46,11 @@ class FileList
     restore
   end
 
+  def first
+    @nfile = 0
+    current
+  end
+
   def next(delta = 1, &block)
     initial = @nfile
     begin
