@@ -622,7 +622,7 @@ class Tagger
     # directory.
 
     dst_dirname =
-      if File.basename(@file_list.directory) != ".deleted"
+      if !Files.deleted?(@file_list.directory)
         create_deleted_dir(@file_list.directory)
       else
         File.dirname(@file_list.directory)
@@ -681,7 +681,7 @@ class Tagger
   end
 
   def switch_to_from_deleted_directory
-    if File.basename(@file_list.directory) == ".deleted"
+    if Files.deleted?(@file_list.directory)
       parent = File.dirname(@file_list.directory)
       set_filename(parent)
     else
@@ -731,7 +731,7 @@ class Tagger
 
   def transform(*args)
     return if !@photo
-    return if File.basename(@file_list.directory) == ".deleted"
+    return if Files.deleted?(@file_list.directory)
 
     # Transform the file, and create a .bak file.
 

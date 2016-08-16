@@ -11,6 +11,10 @@ module Files
     end
   end
 
+  def self.deleted?(dirname)
+    File.basename(dirname) == ".deleted"
+  end
+
   def self.for_directory(dirname)
     Dir[dirname ? File.join(dirname, "*") : "*"].select do |filename|
       image_file?(filename)
@@ -27,7 +31,7 @@ module Files
   def self.enumerate_image_files(filename, recurse, top, yielder)
     case
     when (top || recurse) && File.directory?(filename) &&
-         File.basename(filename) != ".deleted"
+         !Files.deleted?(filename)
       Dir[File.join(filename, "*")].each do |f|
         enumerate_image_files(f, recurse, false, yielder)
       end
