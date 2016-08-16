@@ -287,11 +287,19 @@ class Tagger
           true
         end
       when Gdk::Keyval::KEY_u
-        if event.state == Gdk::ModifierType::CONTROL_MASK
+        case event.state
+        when Gdk::ModifierType::CONTROL_MASK
           # Move to the next untagged photo.
           next_photo do |filename|
             photo = import_photo(filename)
             photo.tags.empty?
+          end
+          true
+        when Gdk::ModifierType::MOD1_MASK
+          # Move to the next unrated photo.
+          next_photo do |filename|
+            photo = import_photo(filename)
+            photo.rating.nil?
           end
           true
         end
