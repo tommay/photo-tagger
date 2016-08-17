@@ -217,32 +217,28 @@ def quote(s)
 end
 
 if options.tags || options.ugly
-  photos = photos.map do |photo|
-    [photo.filename, photo.tags.map{|t|t.tag}.sort]
-  end
-
-  photos.sort.each do |photo|
+  photos.each do |photo|
+    filename = photo.filename
+    tags = photo.tags.map{|t|t.tag}.sort
     if options.ugly
-      photo[1].each { |t| print " -a #{quote(t)}" }
-      puts " #{quote(photo[0])}"
+      tags.each { |t| print " -a #{quote(t)}" }
+      puts " #{quote(filename)}"
     else
-      puts "#{photo[0]}: #{photo[1].join(", ")}"
+      puts "#{filename}: #{tags.join(", ")}"
     end
   end
 else
-  filenames = photos.map do |photo|
-    photo.filename
-  end
-
-  filenames.sort.each do |filename|
+  names =
     if !options.directories
-      print "#{filename}#{terminator}"
-    else
-      dirname = File.dirname(filename)
-      if !@directories[dirname]
-        @directories[dirname] = true
-        print "#{dirname}#{terminator}"
+      photos.map do |photo|
+        photo.filename
       end
+    else
+      photos.map do |photo|
+        photo.directory
+      end.uniq
     end
+  names.each do |name|
+    print "#{name}#{terminator}"
   end
 end
