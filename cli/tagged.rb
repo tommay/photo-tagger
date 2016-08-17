@@ -205,7 +205,7 @@ expression = options.expr || ARGV.map do |arg|
   end
 end.join(" ")
 
-photos = PrattParser.new(Lexer.new(expression)).eval.all.select do |p|
+photos = PrattParser.new(Lexer.new(expression)).eval.order(:taken_time).all.select do |p|
   !Files.deleted?(p.directory)
 end
 
