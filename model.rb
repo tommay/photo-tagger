@@ -8,6 +8,8 @@ require "digest"
 require "exiv2"
 require "byebug"
 
+require_relative "files"
+
 module Model
   # This makes association datasets "chainable" which makes tagged.rb
   # comceptually simpler, more like data_mapper.
@@ -179,6 +181,10 @@ class Photo < Sequel::Model
 
   def filename
     File.join(directory, basename)
+  end
+
+  def deleted?
+    Files.deleted?(directory)
   end
 
   def identical

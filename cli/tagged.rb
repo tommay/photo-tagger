@@ -206,7 +206,7 @@ expression = options.expr || ARGV.map do |arg|
 end.join(" ")
 
 photos = PrattParser.new(Lexer.new(expression)).eval.order(:taken_time).all.select do |p|
-  !Files.deleted?(p.directory)
+  !p.deleted?
 end
 
 def quote(s)
