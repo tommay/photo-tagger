@@ -12,7 +12,6 @@ require "byebug"
 require_relative "model"
 require_relative "photo_window"
 require_relative "files"
-require_relative "file_list"
 require_relative "importer"
 require_relative "exporter"
 require_relative "savelist"
@@ -34,7 +33,7 @@ class Tagger
 
     @mark = Mark.new
 
-    set_filename(@args[@narg])
+    load_photo(@args[@narg])
   end
 
   def init_ui
@@ -221,8 +220,16 @@ class Tagger
         next_arg
         true
       when Gdk::Keyval::KEY_Delete
-        @photo && delete_photo
-        @mark.clear
+        if @photo
+          next_filename = next_file(@photo.filename)
+          if next_filename == @photo.filename
+            # Deleting the last file in the directory.
+            next_filename = nil
+          end
+          @restore = delete_photo(@photo)
+          @mark.clear  # XXX
+          load_photo(next_filename)
+        end
         true
       when Gdk::Keyval::KEY_d
         if event.state == Gdk::ModifierType::CONTROL_MASK
@@ -254,15 +261,15 @@ class Tagger
         end
       when Gdk::Keyval::KEY_space
         if event.state == Gdk::ModifierType::CONTROL_MASK
-          @mark.set(@file_list.current)
+          @photo && @mark.set(@photo.filename)
           true
         end
       when Gdk::Keyval::KEY_x
         if event.state == Gdk::ModifierType::CONTROL_MASK
           mark = @mark.get
-          if mark
-            @mark.set(@file_list.current)
-            set_filename(mark)
+          if mark && @photo
+            @mark.set(@photo.filename)
+            load_photo(mark)
           end
           true
         end
@@ -359,7 +366,7 @@ class Tagger
       when Gdk::Keyval::KEY_0
         case event.state
         when Gdk::ModifierType::CONTROL_MASK
-          load_photo(@file_list.first)
+          load_photo(@directory)
           true
         else
           if !tagging?
@@ -409,8 +416,7 @@ class Tagger
   def rate_photo(photo, rating)
     @restore = Restore.new(photo, photo.rating) do |photo, rating|
       photo.set_rating(rating)
-      @file_list.set_current(photo.filename)
-      load_photo(@file_list.current)
+      load_photo(photo.filename)
     end
     photo.set_rating(rating)
   end
@@ -445,16 +451,19 @@ class Tagger
     end
   end
 
-  def set_filename(filename)
-    @file_list = FileList.new(filename)
-    load_photo(@file_list.current)
-  end
-
   def load_photo(filename)
     if @photo
       save_recent_tags
     end
+    if filename && File.directory?(filename)
+      # Set @directory in case there is nothing to load into @photo.
+      @directory = filename
+      filename = Files.for_directory(filename).first
+    end
     @photo = filename && import_photo(filename)
+    if @photo
+      @directory = @photo.directory
+    end
     load_applied_tags
     load_directory_tags
     show_filename
@@ -492,9 +501,10 @@ class Tagger
     end
   end
 
-  def next_photo(delta = 1, &block)
+  def next_photo(delta = 1, filename = @photo.filename, &block)
     if @photo
-      load_photo(@file_list.next(delta, &block))
+      file = next_file(filename, delta, &block)
+      load_photo(file)
     end
   end
 
@@ -502,14 +512,24 @@ class Tagger
     next_photo(-1)
   end
 
+  def next_file(filename, delta = 1, &block)
+    files = Files.for_directory(File.dirname(filename))
+    initial = files.index(filename)
+    n = initial
+    begin
+      n = (n + delta) % files.size
+    end while n != initial && block && !block.call(files[n])
+    files[n]
+  end
+
   def next_directory(delta = 1)
-    parent = File.dirname(@file_list.directory)
+    parent = File.dirname(@directory)
     siblings = Dir[File.join(parent, "*")].select{|x| File.directory?(x)}.sort
-    index = siblings.index(@file_list.directory)
+    index = siblings.index(@directory)
     if index
       index += delta
       if index >= 0 && index < siblings.size
-        set_filename(siblings[index])
+        load_photo(siblings[index])
       end
     end
   end
@@ -520,7 +540,7 @@ class Tagger
 
   def next_arg(delta = 1)
     @narg = (@narg + delta) % @args.size
-    set_filename(@args[@narg])
+    load_photo(@args[@narg])
   end
 
   def prev_arg
@@ -528,7 +548,7 @@ class Tagger
   end
 
   def show_filename
-    @window.title = "Tagger: #{@photo ? @photo.filename : @file_list.directory}"
+    @window.title = "Tagger: #{@photo ? @photo.filename : @directory}"
   end
 
   def show_rating
@@ -593,7 +613,7 @@ class Tagger
   def load_directory_tags
     list = @directory_tags.model
     list.clear
-    Photo.where(directory: @file_list.directory).tags.each do |tag|
+    Photo.where(directory: @directory).tags.each do |tag|
       list.append[0] = tag.tag
     end
     restore_scroll_when_idle(@directory_tags)
@@ -612,35 +632,43 @@ class Tagger
     end
   end
 
-  # XXX Wow this is ugly.
-  #
-  def delete_photo
-    # If we're not in a .deleted directory, then delete by creating
-    # and renaming to a .deleted subdirectory.  If we're in a .deleted
-    # directory, then delete by renaming/restoring to the parent
-    # directory.
+  def delete_photo(photo)
+    # If the file isn't in a .deleted directory, then delete by
+    # creating and renaming to a .deleted subdirectory.  If it's in a
+    # .deleted directory, then delete by renaming/restoring to the
+    # parent directory.
 
     dst_dirname =
-      if !Files.deleted?(@file_list.directory)
-        create_deleted_dir(@file_list.directory)
+      if !photo.deleted?
+        create_deleted_dir(photo.directory)
       else
-        File.dirname(@file_list.directory)
+        File.dirname(photo.directory)
       end
 
-    # Remember all the "deleted" files for crufty restore.
+    old_directory = photo.directory
 
-    _moved_files = move_related_files(@photo.filename, dst_dirname)
+    move_photo(photo, dst_dirname)
 
-    # Delete from files_list and remember the last file deleted for
-    # crufty restore.
+    new_filename = photo.filename
 
-    _restore_current = @file_list.delete_current
+    # Restoring is just a matter of moving things back.
 
-    @restore = Restore.new do
-      restore_photo(_moved_files, _restore_current)
+    Restore.new do
+      photo = Photo.find(new_filename)
+      move_photo(photo, old_directory)
+      load_photo(photo.filename)
+    end
+  end
+
+  def move_photo(photo, new_directory)
+    if !File.exist?(new_directory) # XXX && ask_create(new_directory)
+      FileUtils.mkdir_p(new_directory)
     end
 
-    load_photo(@file_list.current)
+    move_related_files(photo.filename, new_directory)
+
+    photo.directory = new_directory
+    photo.save
   end
 
   def move_related_files(filename, dst_dir)
@@ -650,43 +678,20 @@ class Tagger
     File.basename(filename) =~ /^(.*)\./
     base = $1
 
-    Dir[File.join(src_dir, "#{base}.*")].map do |src_name|
+    Dir[File.join(src_dir, "#{base}.*")].each do |src_name|
       dst_name = File.join(dst_dir, File.basename(src_name))
       File.rename(src_name, dst_name)
-      [src_name, dst_name]
     end
-  end
-
-  # XXX this is super-crufty.
-  #
-  def restore_photo(moved_files, restore_current)
-    moved_files.each do |name, deleted|
-      File.rename(deleted, name)
-      # If there is a database entry for this file then make sure
-      # its sha1 is up to date.
-      photo = Photo.find(name)
-      if photo
-        photo.set_sha1
-        photo.save
-      end
-    end
-
-    # XXX It would be cleaner just to do set_filename and have it
-    # reload the directory.  It should be performant.
-
-    restore_current.call
-
-    load_photo(@file_list.current)
   end
 
   def switch_to_from_deleted_directory
-    if Files.deleted?(@file_list.directory)
-      parent = File.dirname(@file_list.directory)
-      set_filename(parent)
+    if Files.deleted?(@directory)
+      parent = File.dirname(@directory)
+      load_photo(parent)
     else
-      deleted_directory = File.join(@file_list.directory, ".deleted")
+      deleted_directory = File.join(@directory, ".deleted")
       if File.exist?(deleted_directory)
-        set_filename(deleted_directory)
+        load_photo(deleted_directory)
       end
     end
   end
@@ -694,8 +699,8 @@ class Tagger
   def rename_directory_dialog
     EntryDialog.new(
       title: "Rename Directory", parent: @window,
-      text: @file_list.directory,
-      width_chars: @file_list.directory.size + 20) do |text|
+      text: @directory,
+      width_chars: @directory.size + 20) do |text|
       begin
         rename_photos_directory(text)
       rescue => ex
@@ -715,22 +720,21 @@ class Tagger
     dialog.destroy
   end
 
-  # XXX This breaks deleted files.
   def rename_photos_directory(new_directory)
     if File.exist?(new_directory)
       raise "#{new_directory} already exists"
     end
-    File.rename(@file_list.directory, new_directory)
+    File.rename(@directory, new_directory)
 
-    Photo.where(directory: @file_list.directory)
+    Photo.where(directory: @directory)
       .update(directory: new_directory)
 
-    set_filename(File.join(new_directory, @photo.basename))
+    load_photo(File.join(new_directory, @photo.basename))
   end
 
   def transform(*args)
     return if !@photo
-    return if Files.deleted?(@file_list.directory)
+    return if Files.deleted?(@directory)
 
     # Transform the file, and create a .bak file.
 
@@ -747,30 +751,27 @@ class Tagger
     @photo.set_sha1
     @photo.save
 
-    # Move the .bak file to .deleted with the original filename.  This
-    # makes it look like we deleted the file.  Unless there is already
-    # an existing "deleted" file, in which case just leave it.  This
-    # allows multiple rotations to be undone by restoring the original
-    # backup.
+    # Move the .bak file to .deleted, where it will eventually be
+    # cleaned up.  Unless there is already an existing .bak file, in
+    # which case just leave it.  This allows multiple rotations to be
+    # undone by restoring the original backup.
 
-    deleted_dirname = create_deleted_dir(@file_list.directory)
-    deleted_filename = File.join(deleted_dirname, @photo.basename)
-    if !File.exist?(deleted_filename)
-      File.rename("#{@photo.filename}.bak", deleted_filename)
+    deleted_dirname = create_deleted_dir(@photo.directory)
+    bak_filename = File.join(deleted_dirname, "#{@photo.basename}.bak")
+    if !File.exist?(bak_filename)
+      File.rename("#{@photo.filename}.bak", bak_filename)
     end
 
-    # Set things up so the file can be restored with restore.
-
-    _moved_files = [[@photo.filename, deleted_filename]]
-    _restore_current = @file_list.restore_current
-
-    @restore = Restore.new do
-      restore_photo(_moved_files, _restore_current)
+    @restore = Restore.new(@photo.filename) do |filename, sha1|
+      File.rename(bak_filename, filename)
+      load_photo(filename)
+      @photo.set_sha1
+      @photo.save
     end
 
     # Show the transformed photo.
 
-    load_photo(@file_list.current)
+    load_photo(@photo.filename)
   end
 
   def crop_6mm
@@ -797,10 +798,10 @@ class Tagger
 
   def move_photo_dialog(ask:)
     last =
-      if @move_last_directory == @file_list.directory
+      if @move_last_directory == @directory
         @move_last
       else
-        @file_list.directory
+        @directory
       end
     photo_date = @photo.taken_time&.split&.first
     if photo_date
@@ -811,7 +812,8 @@ class Tagger
       begin
         move_photo(@photo, text)
         @move_last = text
-        @move_last_directory = @file_list.directory
+        @move_last_directory = @directory
+        next_photo
       rescue => ex
         dialog = Gtk::MessageDialog.new(
           type: Gtk::MessageType::ERROR,
@@ -828,7 +830,7 @@ class Tagger
       EntryDialog.new(
         title: "Move To", parent: @window,
         text: last,
-        width_chars: @file_list.directory.size + 20,
+        width_chars: @directory.size + 20,
         insert_text: photo_date) do |text|
         block.call(text)
       end
@@ -837,23 +839,9 @@ class Tagger
     end
   end
 
-  def move_photo(photo, new_directory)
-    if !File.exist?(new_directory) # XXX && ask_create(new_directory)
-      FileUtils.mkdir_p(new_directory)
-    end
-
-    @moved_files = move_related_files(photo.filename, new_directory)
-    @deleted = @file_list.delete_current
-
-    photo.directory = new_directory
-    photo.save
-
-    load_photo(@file_list.current)
-  end
-
   def save_last
     if @photo
-      Last.find_or_create(directory: @file_list.directory) do |last|
+      Last.find_or_create(directory: @directory) do |last|
         last.filename = @photo.filename
       end.update(filename: @photo.filename)
     end
@@ -864,7 +852,6 @@ class Tagger
       Last[@photo.directory]&.tap do |last|
         filename = last.filename
         if File.exist?(filename)
-          set_filename(filename)
           load_photo(filename)
         end
       end

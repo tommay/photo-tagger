@@ -21,7 +21,7 @@ module Files
     end.sort_by{|name| split_name(name)}
   end
 
-  def self.image_files(filename, recurse)
+  def self.image_files(filename, recurse=false)
     Enumerator.new do |yielder|
       enumerate_image_files(filename, recurse, true, yielder)
     end
