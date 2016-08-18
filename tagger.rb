@@ -38,7 +38,7 @@ class Tagger
 
   def init_ui
     # Create the widgets we actually care about and save in instance
-    # variables and use.  Then lay them out.
+    # variables for use.  Then lay them out.
 
     @rating = Gtk::Label.new
 
@@ -539,8 +539,18 @@ class Tagger
   end
 
   def next_arg(delta = 1)
-    @narg = (@narg + delta) % @args.size
-    load_photo(@args[@narg])
+    initial = @narg
+    begin
+      if @args.size > 0
+        @narg = (@narg + delta) % @args.size
+      end
+    end while @narg != initial && !File.exist?(@args[@narg])
+    arg = @args[@narg]
+    # If there are no existing files in the arg list, use nil.
+    if arg && !File.exist?(arg)
+      arg = nil
+    end
+    load_photo(arg)
   end
 
   def prev_arg
