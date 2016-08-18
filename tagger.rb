@@ -25,15 +25,15 @@ class Tagger
     byebug
 
     @recent = SaveList.new([])
-
     @recent_tags_hash = {}
-
-    @args = !args.empty? ? args : ["."]
-    @narg = 0
 
     @mark = Mark.new
 
-    load_photo(@args[@narg])
+    # This will skip initial arguments that don't exist.
+
+    @args = !args.empty? ? args : ["."]
+    @narg = args.size - 1
+    next_arg
   end
 
   def init_ui
