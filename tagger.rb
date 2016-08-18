@@ -34,6 +34,8 @@ class Tagger
     @args = !args.empty? ? args : ["."]
     @narg = args.size - 1
     next_arg
+
+    @get_next = get_next_in_directory
   end
 
   def init_ui
@@ -208,10 +210,10 @@ class Tagger
       # puts Gdk::Keyval.to_name(event.keyval)
       case event.keyval
       when Gdk::Keyval::KEY_Left
-        prev_photo
+        prev_in_directory
         true
       when Gdk::Keyval::KEY_Right
-        next_photo
+        next_in_directory
         true
       when Gdk::Keyval::KEY_Up
         prev_arg
@@ -221,9 +223,12 @@ class Tagger
         true
       when Gdk::Keyval::KEY_Delete
         if @photo
-          next_filename = next_file(@photo.filename)
+          # When working in .deleted directories, always move to the next file.
+          if @photo.deleted?
+            @get_next = get_next_in_directory
+          end
+          next_filename = @get_next.call(1, @photo.filename)
           if next_filename == @photo.filename
-            # Deleting the last file in the directory.
             next_filename = nil
           end
           @restore = delete_photo(@photo)
@@ -294,14 +299,14 @@ class Tagger
         case event.state
         when Gdk::ModifierType::CONTROL_MASK
           # Move to the next untagged photo.
-          next_photo do |filename|
+          next_in_directory do |filename|
             photo = import_photo(filename)
             photo.tags.empty?
           end
           true
         when Gdk::ModifierType::MOD1_MASK
           # Move to the next unrated photo.
-          next_photo do |filename|
+          next_in_directory do |filename|
             photo = import_photo(filename)
             photo.rating.nil?
           end
@@ -503,25 +508,35 @@ class Tagger
     end
   end
 
-  def next_photo(delta = 1, filename = @photo.filename, &block)
+  def next_photo(&block)
     if @photo
-      file = next_file(filename, delta, &block)
-      load_photo(file)
+      next_filename = @get_next.call(1, @photo.filename, &block)
+      load_photo(next_filename)
     end
   end
 
-  def prev_photo
-    next_photo(-1)
+  def next_in_directory(delta = 1, filename = @photo&.filename, &block)
+    if @photo
+      @get_next = get_next_in_directory
+      filename = @get_next.call(delta, filename, &block)
+      load_photo(filename)
+    end
   end
 
-  def next_file(filename, delta = 1, &block)
-    files = Files.for_directory(File.dirname(filename))
-    initial = files.index(filename)
-    n = initial
-    begin
-      n = (n + delta) % files.size
-    end while n != initial && block && !block.call(files[n])
-    files[n]
+  def prev_in_directory
+    next_in_directory(-1)
+  end
+
+  def get_next_in_directory
+    lambda do |delta, filename, &block|
+      files = Files.for_directory(File.dirname(filename))
+      initial = files.index(filename)
+      n = initial
+      begin
+        n = (n + delta) % files.size
+      end until n == initial || !block || block.call(files[n])
+      files[n]
+    end
   end
 
   def next_directory(delta = 1)
@@ -541,22 +556,29 @@ class Tagger
   end
 
   def next_arg(delta = 1)
-    initial = @narg
-    begin
-      if @args.size > 0
-        @narg = (@narg + delta) % @args.size
-      end
-    end while @narg != initial && !File.exist?(@args[@narg])
-    arg = @args[@narg]
-    # If there are no existing files in the arg list, use nil.
-    if arg && !File.exist?(arg)
-      arg = nil
-    end
-    load_photo(arg)
+    @get_next = get_next_arg
+    filename = @get_next.call(delta)
+    load_photo(filename)
   end
 
   def prev_arg
     next_arg(-1)
+  end
+
+  def get_next_arg
+    lambda do |delta, _filename = nil, &block|
+      initial = @narg
+      begin
+        if @args.size > 0
+          @narg = (@narg + delta) % @args.size
+        end
+        arg = @args[@narg]
+      end until @narg == initial ||
+                (arg && File.exist?(arg) && (!block || block.call(arg)))
+      if arg && File.exist?(arg)
+        arg
+      end
+    end
   end
 
   def show_filename
@@ -827,7 +849,7 @@ class Tagger
         move_photo(@photo, text)
         @move_last = text
         @move_last_directory = @directory
-        next_photo
+        next_in_directory
       rescue => ex
         dialog = Gtk::MessageDialog.new(
           type: Gtk::MessageType::ERROR,
