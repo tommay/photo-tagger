@@ -227,7 +227,9 @@ class Tagger
             next_filename = nil
           end
           @restore = delete_photo(@photo)
-          @mark.clear  # XXX
+          if @photo.filename == @mark.get
+            @mark.clear
+          end
           load_photo(next_filename)
         end
         true
