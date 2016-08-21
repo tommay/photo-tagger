@@ -707,10 +707,12 @@ class Tagger
   end
 
   def rename_directory_dialog
+    photo_date = @photo&.taken_time&.split&.first
     EntryDialog.new(
       title: "Rename Directory", parent: @window,
       text: @directory,
-      width_chars: @directory.size + 20) do |text|
+      width_chars: @directory.size + 20,
+      insert_text: photo_date) do |text|
       begin
         rename_photos_directory(text)
       rescue => ex
