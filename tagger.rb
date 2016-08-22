@@ -27,7 +27,7 @@ class Tagger
     @recent = SaveList.new([])
     @recent_tags_hash = {}
 
-    @mark = Mark.new
+    @mark = nil
 
     # This will skip initial arguments that don't exist.
 
@@ -227,8 +227,8 @@ class Tagger
             next_filename = nil
           end
           @restore = delete_photo(@photo)
-          if @photo.filename == @mark.get
-            @mark.clear
+          if @mark == @photo.filename
+            @mark = nil
           end
           load_photo(next_filename)
         end
@@ -263,14 +263,14 @@ class Tagger
         end
       when Gdk::Keyval::KEY_space
         if event.state == Gdk::ModifierType::CONTROL_MASK
-          @photo && @mark.set(@photo.filename)
+          @photo && @mark = @photo.filename
           true
         end
       when Gdk::Keyval::KEY_x
         if event.state == Gdk::ModifierType::CONTROL_MASK
-          mark = @mark.get
-          if mark && @photo
-            @mark.set(@photo.filename)
+          if @mark && @photo
+            mark = @mark
+            @mark = @photo.filename
             load_photo(mark)
           end
           true
@@ -885,20 +885,6 @@ class Tagger
       block.call
       GLib::Source.remove(id)
     end
-  end
-end
-
-class Mark
-  def set(filename)
-    @mark = filename
-  end
-
-  def get
-    @mark
-  end
-
-  def clear
-    @mark = nil
   end
 end
 
