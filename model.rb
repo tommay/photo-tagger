@@ -86,12 +86,16 @@ end
 # use a default.
 
 get_db = lambda do |dir|
-  if dir == "/"
-    "/home/tom/tagger/tags.db"
+  file = File.join(dir, ".taggerdb")
+  if File.exist?(file)
+    File.expand_path(File.read(file).chomp)
   else
-    file = File.join(dir, ".taggerdb")
-    if File.exist?(file)
-      File.read(file).chomp
+    if dir == "/"
+      dot_tagger = File.expand_path(File.join("~", ".tagger"))
+      if !File.directory?(dot_tagger)
+        Dir.mkdir(dot_tagger)
+      end
+      File.join(dot_tagger, "tags.db")
     else
       get_db.call(File.dirname(dir))
     end
