@@ -5,14 +5,6 @@ class SaveList
     @pos = -1
   end
 
-  def tags_lists(o)
-    o.map do |list|
-      list.map do |tag|
-        tag.tag
-      end
-    end
-  end
-
   def add(o)
     # XXX Element order doesn't really matter for comparison.  Use an
     # ordered set/hash to store the tags?

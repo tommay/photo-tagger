@@ -14,7 +14,7 @@ require_relative "photo_window"
 require_relative "files"
 require_relative "importer"
 require_relative "exporter"
-require_relative "savelist"
+require_relative "save_list"
 require_relative "entry_dialog"
 require_relative "restore"
 
