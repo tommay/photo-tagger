@@ -231,8 +231,9 @@ class Tagger
           if next_filename == @photo.filename
             next_filename = nil
           end
+          old_filename = @photo.filename
           @restore = delete_photo(@photo)
-          if @mark == @photo.filename
+          if @mark == old_filename
             @mark = nil
           end
           load_photo(next_filename)
@@ -846,10 +847,22 @@ class Tagger
 
     block = lambda do |text|
       begin
+        # When working in .deleted directories, always move to the next file.
+        if @photo.deleted?
+          @get_next = get_next_in_directory
+        end
+        next_filename = @get_next.call(1, @photo.filename)
+        if next_filename == @photo.filename
+          next_filename = nil
+        end
+        old_filename = @photo.filename
         move_photo(@photo, text)
+        if @mark == old_filename
+          @mark = @photo.filename
+        end
         @move_last = text
         @move_last_directory = @directory
-        next_in_directory
+        load_photo(next_filename)
       rescue => ex
         dialog = Gtk::MessageDialog.new(
           type: Gtk::MessageType::ERROR,
