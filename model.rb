@@ -191,6 +191,10 @@ class Photo < Sequel::Model
     Files.deleted?(directory)
   end
 
+  def date_string
+    self.taken_time&.split&.first
+  end
+
   def identical
     Photo.where(sha1: self.sha1).exclude(:id => self.id)
   end

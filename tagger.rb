@@ -585,7 +585,11 @@ class Tagger
   end
 
   def show_filename
-    @window.title = "Tagger: #{@photo ? @photo.filename : @directory}"
+    date_string = @photo&.date_string
+    if date_string
+      date_string = " (#{date_string})"
+    end
+    @window.title = "Tagger: #{@photo ? @photo.filename : @directory} #{date_string}"
   end
 
   def show_rating
@@ -734,7 +738,7 @@ class Tagger
   end
 
   def rename_directory_dialog
-    photo_date = @photo&.taken_time&.split&.first
+    photo_date = @photo&.date_string
     EntryDialog.new(
       title: "Rename Directory", parent: @window,
       text: @directory,
@@ -842,7 +846,7 @@ class Tagger
       else
         @directory
       end
-    photo_date = @photo.taken_time&.split&.first
+    photo_date = @photo.date_string
     if photo_date
       last = last.sub(/\d{4}-\d{2}-\d{2}/, photo_date)
     end
