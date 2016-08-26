@@ -31,7 +31,9 @@ class Tagger
 
     # This will skip initial arguments that don't exist.
 
-    @args = !args.empty? ? args : ["."]
+    @args = (!args.empty? ? args : ["."]).map do |arg|
+      Pathname.new(arg).realpath.to_s
+    end
     @narg = args.size - 1
     next_arg
 
