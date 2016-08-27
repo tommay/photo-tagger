@@ -654,9 +654,47 @@ class Tagger
   def load_directory_tags
     list = @directory_tags.model
     list.clear
-    Photo.where(directory: @directory).tags.each do |tag|
+    # This is crap.  This is what we want here:
+    #   Photo.where(directory: @directory).tags.each do |tag|
+    # But Sequel selects the ids of all the Photos in the directory,
+    # then creates a giant WHERE clause using OR that sqlite blows up
+    # on.  So much for the dataset_associations plugin.  So roll our
+    # own join.
+    # 
+    # select * from tags
+    #   join photos_tags
+    #     on photos_tags.tag_id = tags.id
+    #   join photos
+    #     on photos.id = photos_tags.photo_id
+    #   where photos.directory = ?;
+    #
+    # explain query plan:
+    # 0|0|2|SEARCH TABLE photos USING INDEX sqlite_autoindex_photos_1 (directory=?)
+    # 0|1|1|SEARCH TABLE photos_tags USING COVERING INDEX sqlite_autoindex_photos_tags_1 (photo_id=?)
+    # 0|2|0|SEARCH TABLE tags USING INTEGER PRIMARY KEY (rowid=?)
+    #
+    # But it's more straightforward with subqueries:
+    # explain query plan:
+    # select * from tags
+    #   where tags.id  in (
+    #     select photos_tags.tag_id from photos_tags
+    #       where photos_tags.photo_id in (
+    #         select photos.id from photos
+    #           where photos.directory = ?));
+    # 0|0|0|SEARCH TABLE tags USING INTEGER PRIMARY KEY (rowid=?)
+    # 0|0|0|EXECUTE LIST SUBQUERY 1
+    # 1|0|0|SEARCH TABLE photos_tags USING COVERING INDEX sqlite_autoindex_photos_tags_1 (photo_id=?)
+    # 1|0|0|EXECUTE LIST SUBQUERY 2
+    # 2|0|0|SEARCH TABLE photos USING COVERING INDEX sqlite_autoindex_photos_1 (directory=?)
+
+    # Now that Phototag is defined it works to chain the datasets
+    # instead of building up the subqueries manually using
+    # .select(...).where(...).
+
+    Photo.where(directory: @directory).phototags.tags.each do |tag|
       list.append[0] = tag.tag
     end
+
     restore_scroll_when_idle(@directory_tags)
   end
 

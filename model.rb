@@ -108,6 +108,7 @@ Model.setup(db_file)
 
 class Photo < Sequel::Model
   many_to_many :tags
+  one_to_many :phototags
   # Don't need this with on_delete cascade.
   plugin :association_dependencies, tags: :nullify
 
@@ -230,6 +231,7 @@ end
 
 class Tag < Sequel::Model
   many_to_many :photos
+  one_to_many :phototags
   # Don't need this with on_delete cascade.
   plugin :association_dependencies, photos: :nullify
 
@@ -238,6 +240,15 @@ class Tag < Sequel::Model
       t.created_at = Time.now
     end
   end
+end
+
+# Need to define PhotoTag so we can roll our own query in
+# Tagger#load_directory_tags because dataset_associations has
+# problems.
+#
+class Phototag < Sequel::Model(:photos_tags)
+  many_to_one :tag
+  many_to_one :photo
 end
 
 class Last < Sequel::Model
