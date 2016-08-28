@@ -4,8 +4,8 @@ require "bundler/setup"
 require "trollop"
 require "byebug"
 
+require_relative "helpers"
 require_relative "../importer"
-require_relative "../files"
 
 options = Trollop::options do
   banner "Usage: #{$0} [options] file|directory..."
@@ -14,24 +14,18 @@ options = Trollop::options do
   opt :recurse, "Recurse into directories"
 end
 
-def tag(filename, add, remove)
+process_args(ARGV, options.recurse) do |filename|
   photo = Importer.find_or_import_from_file(
     filename, copy_tags: true, purge_identical_images: false,
     force_purge: false)
 
   Photo.db.transaction do
-    add.each do |tag|
+    options.add.each do |tag|
       photo.add_tag(tag)
     end
 
-    remove.each do |tag|
+    options.remove.each do |tag|
       photo.remove_tag(tag)
     end
-  end
-end
-
-ARGV.each do |filename|
-  Files.image_files(filename, options.recurse).each do |file|
-    tag(file, options.add, options.remove)
   end
 end

@@ -3,7 +3,7 @@
 require "bundler/setup"
 require "trollop"
 require "byebug"
-require_relative "../files"
+require_relative "helpers"
 require_relative "../importer"
 
 # import [-r] dir|*.jpg
@@ -21,18 +21,12 @@ options = Trollop::options do
   opt :recurse, "Recurse into directories"
 end
 
-def import(filename, options)
-  Files.image_files(filename, options.recurse).each do |file|
-    begin
-      Importer.find_or_import_from_file(
-        file, copy_tags: options.copy, purge_identical_images: options.purge,
-        force_purge: options.force)
-    rescue => ex
-      puts "error: #{file}: #{ex}"
-    end
+process_args(ARGV, options.recurse) do |filename|
+  begin
+    Importer.find_or_import_from_file(
+      filename, copy_tags: options.copy, purge_identical_images: options.purge,
+      force_purge: options.force)
+  rescue => ex
+    puts "error: #{filename}: #{ex}"
   end
-end
-
-ARGV.each do |filename|
-  import(filename, options)
 end

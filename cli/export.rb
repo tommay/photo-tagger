@@ -3,7 +3,7 @@
 require "bundler/setup"
 require "trollop"
 require "byebug"
-require_relative "../files"
+require_relative "helpers"
 require_relative "../exporter"
 
 # export *.jpg
@@ -15,12 +15,6 @@ options = Trollop::options do
   opt :recurse, "Recurse into directories"
 end
 
-def export(filename, options)
-  Files.image_files(filename, options.recurse).each do |file|
-    Exporter.export_to_sidecar(file)
-  end
-end
-
-ARGV.each do |filename|
-  export(filename, options)
+process_args(ARGV, options.recurse) do |filename|
+  Exporter.export_to_sidecar(filename)
 end

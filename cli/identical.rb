@@ -4,21 +4,31 @@ require "bundler/setup"
 require "trollop"
 require "pathname"
 require "byebug"
+require_relative "helpers"
+require_relative "../importer"
 require_relative "../model"
 
 # identical file
 #   List all the databased files identical to filename.
 
 options = Trollop::options do
-  banner "Usage: #{$0} [options] file"
+  banner "Usage: #{$0} [options] file|directory"
+  opt :recurse, "Recurse into directories"
 end
 
-photo = Photo.find(ARGV[0])
-if !photo
-  puts "#{ARGV[0]} not found"
-  exit(1)
-end
-
-photo.identical.each do |identical|
-  puts identical.filename
+process_args(ARGV, options.recurse) do |filename|
+  begin
+    photo = Importer.find_or_import_from_file(
+      filename, copy_tags: options.copy, purge_identical_images: options.purge,
+      force_purge: options.force)
+    identical = photo.identical
+    if !identical.empty?
+      puts photo.filename
+      photo.identical.each do |identical|
+        puts "  #{identical.filename}"
+      end
+    end
+  rescue => ex
+    puts "error: #{filename}: #{ex}"
+  end
 end
