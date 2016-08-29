@@ -25,9 +25,12 @@ class Tagger
     byebug
 
     @recent = SaveList.new([])
+    @history = []
+
     @recent_tags_hash = {}
 
     @mark = nil
+
 
     # This will skip initial arguments that don't exist.
 
@@ -223,6 +226,22 @@ class Tagger
       when Gdk::Keyval::KEY_Down
         next_arg
         true
+      when Gdk::Keyval::KEY_b
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          rotate_backwards(@history)
+          @history.first&.tap do |filename|
+            load_photo(filename)
+          end
+          true
+        end
+      when Gdk::Keyval::KEY_f
+        if event.state == Gdk::ModifierType::CONTROL_MASK
+          rotate_forwards(@history)
+          @history.first&.tap do |filename|
+            load_photo(filename)
+          end
+          true
+        end
       when Gdk::Keyval::KEY_Delete
         if @photo
           # When working in .deleted directories, always move to the next file.
@@ -473,6 +492,7 @@ class Tagger
     @photo = filename && import_photo(filename)
     if @photo
       @directory = @photo.directory
+      save_history
     end
     load_applied_tags
     load_directory_tags
@@ -509,6 +529,12 @@ class Tagger
       load_applied_tags
       load_recent_tags
     end
+  end
+
+  def save_history
+    filename = @photo.filename
+    @history.delete(filename)
+    @history.unshift(filename)
   end
 
   def next_photo(&block)
@@ -963,6 +989,20 @@ class Tagger
     id = GLib::Idle.add do
       block.call
       GLib::Source.remove(id)
+    end
+  end
+
+  def rotate_forwards(array)
+    e = array.pop
+    if e
+      array.unshift(e)
+    end
+  end
+
+  def rotate_backwards(array)
+    e = array.shift
+    if e
+      array.push(e)
     end
   end
 end
