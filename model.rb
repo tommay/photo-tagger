@@ -176,6 +176,10 @@ class Photo < Sequel::Model
     super(filename.is_a?(String) ? split_filename(filename) : filename)
   end
 
+  def self.find_dataset(filename)
+    where(split_filename(filename))
+  end
+
   def self.split_filename(filename)
     realpath = Pathname.new(filename).realpath
     {
