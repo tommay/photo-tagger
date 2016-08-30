@@ -292,11 +292,17 @@ class Tagger
           true
         end
       when Gdk::Keyval::KEY_x
-        if event.state == Gdk::ModifierType::CONTROL_MASK
+        case event.state
+        when Gdk::ModifierType::CONTROL_MASK
           if @mark && @photo
             mark = @mark
             @mark = @photo.filename
             load_photo(mark)
+          end
+          true
+        when Gdk::ModifierType::MOD1_MASK
+          if @mark
+            load_photo(@mark)
           end
           true
         end
