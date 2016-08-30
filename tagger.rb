@@ -25,7 +25,7 @@ class Tagger
     byebug
 
     @recent = SaveList.new([])
-    @history = []
+    @history = Rotator.new
 
     @recent_tags_hash = {}
 
@@ -228,16 +228,14 @@ class Tagger
         true
       when Gdk::Keyval::KEY_b
         if event.state == Gdk::ModifierType::CONTROL_MASK
-          rotate_backwards(@history)
-          @history.first&.tap do |filename|
+          @history.backwards&.tap do |filename|
             load_photo(filename)
           end
           true
         end
       when Gdk::Keyval::KEY_f
         if event.state == Gdk::ModifierType::CONTROL_MASK
-          rotate_forwards(@history)
-          @history.first&.tap do |filename|
+          @history.forwards&.tap do |filename|
             load_photo(filename)
           end
           true
@@ -532,9 +530,7 @@ class Tagger
   end
 
   def save_history
-    filename = @photo.filename
-    @history.delete(filename)
-    @history.unshift(filename)
+    @history.add(@photo.filename)
   end
 
   def next_photo(&block)
@@ -991,19 +987,32 @@ class Tagger
       GLib::Source.remove(id)
     end
   end
+end
 
-  def rotate_forwards(array)
-    e = array.pop
-    if e
-      array.unshift(e)
-    end
+class Rotator
+  def initialize(list = [])
+    @list = list.dup
   end
 
-  def rotate_backwards(array)
-    e = array.shift
+  def add(element)
+    @list.delete(element)
+    @list.unshift(element)
+  end
+
+  def forwards
+    e = @list.pop
     if e
-      array.push(e)
+      @list.unshift(e)
     end
+    @list.first
+  end
+
+  def backwards
+    e = @list.shift
+    if e
+      @list.push(e)
+    end
+    @list.first
   end
 end
 
