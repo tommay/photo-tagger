@@ -31,13 +31,13 @@ class Tagger
 
     @mark = nil
 
-
     # This will skip initial arguments that don't exist.
 
-    @args = (!args.empty? ? args : ["."]).map do |arg|
-      Pathname.new(arg).realpath.to_s
-    end
-    @narg = args.size - 1
+    args = (!args.empty? ? args : ["."]).map do |arg|
+      Pathname.new(arg).realpath.to_s rescue nil
+    end.compact
+    @args = Rotator.new(args)
+    @args.forwards
     next_arg
 
     @get_next = get_next_in_directory
@@ -246,7 +246,7 @@ class Tagger
           if @photo.deleted?
             @get_next = get_next_in_directory
           end
-          next_filename = @get_next.call(1, @photo.filename)
+          next_filename = @get_next.call(:next, @photo.filename)
           if next_filename == @photo.filename
             next_filename = nil
           end
@@ -535,25 +535,26 @@ class Tagger
 
   def next_photo(&block)
     if @photo
-      next_filename = @get_next.call(1, @photo.filename, &block)
+      next_filename = @get_next.call(:next, @photo.filename, &block)
       load_photo(next_filename)
     end
   end
 
-  def next_in_directory(delta = 1, filename = @photo&.filename, &block)
+  def next_in_directory(dir = :next, filename = @photo&.filename, &block)
     if @photo
       @get_next = get_next_in_directory
-      filename = @get_next.call(delta, filename, &block)
+      filename = @get_next.call(dir, filename, &block)
       load_photo(filename)
     end
   end
 
   def prev_in_directory
-    next_in_directory(-1)
+    next_in_directory(:prev)
   end
 
   def get_next_in_directory
-    lambda do |delta, filename, &block|
+    lambda do |dir, filename, &block|
+      delta = (dir == :next) ? 1 : -1
       files = Files.for_directory(File.dirname(filename))
       initial = files.index(filename)
       n = initial
@@ -580,25 +581,23 @@ class Tagger
     next_directory(-1)
   end
 
-  def next_arg(delta = 1)
+  def next_arg(dir = :next)
     @get_next = get_next_arg
-    filename = @get_next.call(delta)
+    filename = @get_next.call(dir)
     load_photo(filename)
   end
 
   def prev_arg
-    next_arg(-1)
+    next_arg(:prev)
   end
 
   def get_next_arg
-    lambda do |delta, _filename = nil, &block|
-      initial = @narg
+    lambda do |dir, _filename = nil, &block|
+      method = (dir == :next) ? :backwards : :forwards
+      initial = @args.current
       begin
-        if @args.size > 0
-          @narg = (@narg + delta) % @args.size
-        end
-        arg = @args[@narg]
-      end until @narg == initial ||
+        arg = @args.send(method)
+      end until arg == initial ||
                 (arg && File.exist?(arg) && (!block || block.call(arg)))
       if arg && File.exist?(arg)
         arg
@@ -917,7 +916,7 @@ class Tagger
         if @photo.deleted?
           @get_next = get_next_in_directory
         end
-        next_filename = @get_next.call(1, @photo.filename)
+        next_filename = @get_next.call(:next, @photo.filename)
         if next_filename == @photo.filename
           next_filename = nil
         end
@@ -999,12 +998,16 @@ class Rotator
     @list.unshift(element)
   end
 
+  def current
+    @list.first
+  end
+
   def forwards
     e = @list.pop
     if e
       @list.unshift(e)
     end
-    @list.first
+    current
   end
 
   def backwards
@@ -1012,7 +1015,7 @@ class Rotator
     if e
       @list.push(e)
     end
-    @list.first
+    current
   end
 end
 
