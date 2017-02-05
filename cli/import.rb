@@ -6,19 +6,16 @@ require "byebug"
 require_relative "helpers"
 require_relative "../importer"
 
-# import [-r] dir|*.jpg
-#   Add images to the database by filename if they don't already exist.
-#   If any existing images have the same sha1, their tags are added.
-#   Read xmp sidecar files and add the tags to the database.
-#   -r to recurse into directories.
-#   XXX might want a way to replace tags instead of add.
-
 options = Trollop::options do
-  banner "Usage: #{$0} [options] file|directory..."
+  banner <<EOS
+Add images to the database by filename if they don't already exist.
+Also read xmp sidecar files and add tags and rating to the database.
+XXX might want a way to replace tags instead of add.
+EOS
+  opt :recurse, "Recurse into directories"
   opt :copy, "Copy tags from existing identical images"
   opt :purge, "Purge identical images that no longer exist"
   opt :force, "Purge identical images even if they exist"
-  opt :recurse, "Recurse into directories"
 end
 
 process_args(ARGV, options.recurse) do |filename|

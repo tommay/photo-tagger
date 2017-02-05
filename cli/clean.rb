@@ -5,8 +5,23 @@ require "trollop"
 require "fileutils"
 require "byebug"
 
+# clean directory ...
+# For each argument:
+#   Remove .deleted directories
+#   Remove empty directories
+#   Remove .bak files
+#   tag purge -e <directory>
+
 options = Trollop::options do
-  banner "Usage: #{$0} directory..."
+  banner <<EOS
+Usage: #{$0} directory...
+Get rid of cruft in directories and database:
+- remove .deleted directories
+- remove empty directories
+- remove .bak files
+- tag purge -r <directory> to remove database entries
+  without a corresponding file
+EOS
 end
 
 def clean(directory)

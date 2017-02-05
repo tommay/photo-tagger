@@ -5,16 +5,17 @@ require "trollop"
 require "byebug"
 require_relative "../model"
 
-# list [-d|-f]
-#   -f list files in the database
-#   -d list directories in the database
-#   -t list tags
-
 options = Trollop::options do
-  banner "Usage: #{$0} [options]"
-  opt :files, "List files in the database"
-  opt :directories, "List directories in the database"
-  opt :tags, "List tags in the database"
+  banner <<EOS
+Usage: #{$0} [options]
+List files, directories, or tags in the database.
+
+Tags are sorted most recent first so it's easy to look through
+them and fix typos with "tag rename".
+EOS
+  opt :files, "List files in the database, sorted"
+  opt :directories, "List directories in the database, sorted"
+  opt :tags, "List tags in the database, most recent first"
   conflicts :files, :directories, :tags
 end
 
@@ -27,7 +28,7 @@ when options.files
   end
 when options.directories
   Photo.distinct.select(:directory).order(:directory).each do |photo|
-    puts "#{photo.directory}"
+    puts photo.directory
   end
 when options.tags
   Tag.order(Sequel.desc(:created_at)).each do |tag|

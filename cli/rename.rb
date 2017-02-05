@@ -8,7 +8,12 @@ require_relative "../model"
 require_relative "../files"
 
 p = Trollop::Parser.new do
-  banner "Usage: #{$0} old new"
+  banner <<EOS
+Usage: #{$0} old new
+Rename a tag from old to new.  Useful for fixing typos.
+
+This does the right thing whether or not new tag already exists.
+EOS
 end
 
 opts = Trollop::with_standard_exception_handling(p) do

@@ -10,7 +10,10 @@ require_relative "../model"
 #   -d delete unused tags.
 
 options = Trollop::options do
-  banner "Usage: #{$0} [options]"
+  banner <<EOS
+Usage: #{$0} [options]
+List or delete unused tags.
+EOS
   # Can't use :delete as the long name because options is a Hash that
   # already has #delete.
   opt :destroy, "Delete unused tags", long: :delete, short: :d

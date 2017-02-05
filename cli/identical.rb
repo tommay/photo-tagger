@@ -12,7 +12,10 @@ require_relative "../model"
 #   List all the databased files identical to filename.
 
 options = Trollop::options do
-  banner "Usage: #{$0} [options] file|directory"
+  banner <<EOS
+Usage: #{$0} [options] file|directory
+List all databases files identical to filename.
+EOS
   opt :recurse, "Recurse into directories"
 end
 

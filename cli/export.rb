@@ -11,7 +11,15 @@ require_relative "../exporter"
 #   to an xmp sidecar file, adding to any existing tags (?).
 
 options = Trollop::options do
-  banner "Usage: #{$0} [options] file|directory..."
+  banner <<EOS
+Usage: #{$0} [options] file|directory...
+Export from database to .xmp sidecar files: sha1, tags, rating.
+
+If a sidecar file exists, information is added to it.
+
+If there is no database entry for a file, do nothing.
+Existing sidecar files are backed up as .xmp.0.
+EOS
   opt :recurse, "Recurse into directories"
 end
 

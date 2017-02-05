@@ -7,9 +7,12 @@ require_relative "helpers"
 require_relative "../importer"
 
 options = Trollop::options do
-  banner "Usage: #{$0} [options] file|directory..."
-  opt :directories, "List directories with untagged files"
+  banner <<EOS
+Usage: #{$0} [options] file|directory...
+List untagged files, so they can be tagged.
+EOS
   opt :recurse, "Recurse into directories"
+  opt :directories, "List directories with untagged files"
 end
 
 directories = {}
