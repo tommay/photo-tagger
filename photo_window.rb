@@ -38,7 +38,7 @@ class PhotoWindow
     @event_box.signal_connect("button-press-event") do |widget, event|
       case event.type.nick
       when "button-press"
-        @motion_tracker = MotionTracker.new(event)
+        @last_motion_coord = get_event_coord(event)
       when "2button-press"
         zoom_to(event.x, event.y)
       end
@@ -47,13 +47,15 @@ class PhotoWindow
 
     @event_box.signal_connect("motion-notify-event") do |widget, event|
       # I'm not sure how things have gotten here without
-      # @motion_tracker being set, but they have.
+      # @last_motion_coord being set, but they have.
 
-      if @motion_tracker
-        @motion_tracker.track(event)
+      if @last_motion_coord
+        current = get_event_coord(event)
+        delta = current - @last_motion_coord
+        @last_motion_coord = current
 
         if @scaled_pixbuf
-          @offset = bound_offset(@offset - @motion_tracker.delta)
+          @offset = bound_offset(@offset - delta)
           show_scaled_pixbuf
         end
       end
@@ -180,22 +182,8 @@ class PhotoWindow
   def get_widget
     @event_box
   end
-end
 
-class MotionTracker
-  attr_reader :delta
-
-  def initialize(event)
-    @last = get_coord(event)
-  end
-
-  def track(event)
-    current = get_coord(event)
-    @delta = current - @last
-    @last = current
-  end
-
-  def get_coord(event)
+  def get_event_coord(event)
     Coord.new(event.x, event.y)
   end
 end
