@@ -40,7 +40,7 @@ class PhotoWindow
       when "button-press"
         @last_motion_coord = get_event_coord(event)
       when "2button-press"
-        zoom_to(event.x, event.y)
+        zoom_to(get_event_coord(event))
       end
       false
     end
@@ -158,23 +158,27 @@ class PhotoWindow
     scale > 1 ? 1 : scale
   end
 
-  def zoom_to(x, y)
-    x, y = get_pixbuf_coords(x, y)
+  def zoom_to(event_coord)
+    # Pan to event_coord
+
+    pixbuf_coord = get_pixbuf_coord(event_coord)
 
     crop_width = min(@image.allocated_width, @pixbuf.width)
     crop_height = min(@image.allocated_height, @pixbuf.height)
 
-    @offset = Coord.new(x - crop_width / 2, y - crop_height / 2)
+    @offset = pixbuf_coord - Coord.new(crop_width / 2, crop_height / 2)
+
+    # And zoom to full scale.
 
     set_scale(1)
   end
 
-  def get_pixbuf_coords(x, y)
+  def get_pixbuf_coord(event_coord)
     excess_width = @image.allocated_width - @crop.width
-    x = (x - excess_width / 2 + @crop.x) / @scale_factor
+    x = (event_coord.x - excess_width / 2 + @crop.x) / @scale_factor
     excess_height = @image.allocated_height - @crop.height
-    y = (y - excess_height / 2 + @crop.y) / @scale_factor
-    [x, y]
+    y = (event_coord.y - excess_height / 2 + @crop.y) / @scale_factor
+    Coord.new(x, y)
   end
 
   # This is only for packing the window layout, yuck.
