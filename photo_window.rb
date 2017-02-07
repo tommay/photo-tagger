@@ -6,6 +6,10 @@ class PhotoWindow
   Crop = Struct.new(:x, :y, :width, :height)
 
   def initialize
+    # @image is a Gtk::Image used for getting the on-screen size and for
+    # displaying a pixbuf with @image.set_pixbuf.  The actuaal widget used
+    # in layout is @event_box, obtained from get_widget.
+
     @image = Gtk::Image.new.tap do |o|
       o.set_size_request(400, 400)
     end
@@ -16,9 +20,16 @@ class PhotoWindow
     @event_box = Gtk::EventBox.new
     @event_box.add(@image)
 
+    # @scale can be either :fit to fit the photo to the available
+    # screen space, or a nuneric scale factor.  In practice this will
+    # either be :fit, or 1 to display a portion of the image without
+    # scaling.
+
     @scale = :fit
-    @offset_x = 0
-    @offset_y = 0
+
+    # @offset is the upper left corner of the image to display.
+
+    @offset = Coord.new(0, 0)
 
     @image.signal_connect("size-allocate") do |widget, rectangle|
       show_pixbuf
@@ -42,9 +53,7 @@ class PhotoWindow
         @motion_tracker.track(event)
 
         if @scaled_pixbuf
-          @offset_x -= @motion_tracker.delta_x
-          @offset_y -= @motion_tracker.delta_y
-          bound_offsets
+          @offset = bound_offset(@offset - @motion_tracker.delta)
           show_scaled_pixbuf
         end
       end
@@ -53,15 +62,16 @@ class PhotoWindow
     end
   end
 
-  def bound_offsets
-    @offset_x = bound(
-      @offset_x, 0,
+  def bound_offset(offset)
+    x = bound(
+      offset.x, 0,
       max(@scaled_pixbuf.width - @image.allocated_width, 0))
 
-    @offset_y =
-      bound(
-        @offset_y, 0,
-        max(@scaled_pixbuf.height - @image.allocated_height, 0))
+    y = bound(
+      offset.y, 0,
+      max(@scaled_pixbuf.height - @image.allocated_height, 0))
+
+    Coord.new(x, y)
   end
 
   def bound(val, min, max)
@@ -98,7 +108,7 @@ class PhotoWindow
     if @pixbuf
       @scale_factor = compute_scale(@scale, @image, @pixbuf)
       scale_pixbuf(@scale_factor)
-      bound_offsets
+      @offset = bound_offset(@offset)
       show_scaled_pixbuf
     else
       @image.set_pixbuf(nil)
@@ -116,7 +126,7 @@ class PhotoWindow
 
   def show_scaled_pixbuf
     @crop = Crop.new(
-      @offset_x, @offset_y,
+      @offset.x, @offset.y,
       min(@image.allocated_width, @scaled_pixbuf.width),
       min(@image.allocated_height, @scaled_pixbuf.height))
     cropped_pixbuf = Gdk::Pixbuf.new(
@@ -152,8 +162,7 @@ class PhotoWindow
     crop_width = min(@image.allocated_width, @pixbuf.width)
     crop_height = min(@image.allocated_height, @pixbuf.height)
 
-    @offset_x = x - crop_width / 2
-    @offset_y = y - crop_height / 2
+    @offset = Coord.new(x - crop_width / 2, y - crop_height / 2)
 
     set_scale(1)
   end
@@ -174,17 +183,25 @@ class PhotoWindow
 end
 
 class MotionTracker
-  attr_reader :delta_x, :delta_y
+  attr_reader :delta
 
   def initialize(event)
-    @last_x = event.x
-    @last_y = event.y
+    @last = get_coord(event)
   end
 
   def track(event)
-    @delta_x = event.x - @last_x
-    @last_x = event.x
-    @delta_y = event.y - @last_y
-    @last_y = event.y
+    current = get_coord(event)
+    @delta = current - @last
+    @last = current
+  end
+
+  def get_coord(event)
+    Coord.new(event.x, event.y)
+  end
+end
+
+Coord = Struct.new(:x, :y) do
+  def -(other)
+    Coord.new(self.x - other.x, self.y - other.y)
   end
 end
