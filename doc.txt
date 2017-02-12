@@ -1,11 +1,16 @@
-Some quick so I don't forget how to use this.
+Some quick doc so I don't forget how to use this.
 
 tagger [file|directory]...
 
 If no files or directories are given, the current directory "." is
 used.
 
-Finding the .db file
+Finding the .db file:
+
+Check TAGGER_DB in the environment.  If not set, search up the
+directory tree from the current directory for a .taggerdb file to tell
+us what sqlite file to use.  If no .taggerdb is found, use tags,db in
+the current directory.  TAGGER_DB in the environment overrides this.
 
 Navigation:
 
@@ -14,7 +19,8 @@ current photo's directory.  Photos are sorted alphabetically by name,
 with numbers within filenames sorted by value, not alphabetically, so
 "photo_9.jpg" will sort before "photo_10.jpg".
 
-The up and down arrows move to the previous or next argument.
+The up and down arrows move to the previous or next argument, which is
+either a file or a directory.
 
 C-0 moves to the first file in the directory.
 
@@ -23,6 +29,11 @@ C-u moves to the next untagged photo in the directory.
 A-u moves to the next unrated photo in the directory.
 
 C-d switches to/from .daleted.
+
+Ctrl-n moves to the next directory in the file system.
+
+Ctrl-p moves to the previous directory in the file system.
+
 
 Operations:
 
@@ -33,6 +44,8 @@ Operations:
 - Ctrl-6 losslessly crops a photo taken by my 6mm lens so the circular
   portion fills the frame.
 
+File management:
+
 - Delete deletes the current photo as well as any files with the same
   basename, so raw files and xmp files and whatever else are all
   deleted together.  After deleting, it moves to either the next file
@@ -41,23 +54,19 @@ Operations:
   working with a set of files in a dorectory or a set of files given
   as arguments.
 
-  Deleted files are just moves the the .deleted subdirctory.  They can
+  Deleted files are just moved the the .deleted subdirctory.  They can
   be reviewed by navigating to the .deleted subdirectory with C-d.
   Deleting from .deleted undeletes by moving the files back up a
   level.
 
-- Ctrl-n moves to the next directory in the file system.
-
-- Ctrl-p moves to the previous directory in the file system.
-
 - Ctrl-m moves the photo to a new directory.  A dialog pops up to
-  enter the new directory name.  Ctrl-m has already been used to
-  move a photo from the current photo's directory, then the last
-  directory moved to is used as the default.  Otherwise the current
-  photo's directory is used as the default.  If the default contains
-  a date like "2016-08-23" it is replaced with the current photo's date.
-  When entering the new directory name, Ctrl-d will insert the current
-  photo's date if it's known.
+  enter the new directory name.  If the most recent file ctrl-m'd in
+  thie session was moved from the current photo's directory, then the
+  directory it was moved to is used as the default.  Otherwise the
+  current photo's directory is used as the default.  If the default
+  contains a date like "2016-08-23" it is replaced with the current
+  photo's date.  When entering the new directory name, Ctrl-d will
+  insert the current photo's date if it's known.
 
 - Alt-m moves the current photo to a new directory without asking
   where to move it.  It uses Ctrl-m's default directory, including any
@@ -67,7 +76,7 @@ Operations:
 
 - Ctrl-z is undo.  It will undo rotate, crop, and delete.  If a file
   has been rotated multiple times it will undo to the original
-  rotation.
+  rotation.  XXX is will undo move too, right?
 
 Tagging
 < >
