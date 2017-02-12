@@ -81,9 +81,10 @@ module Model
   end
 end
 
-# Grovel up the directory tree looking for a .taggerdb file to tell us
-# what directory to use.  If not found, get it from the environment or
-# use a default.
+# Search up the directory tree from the current directory looking for
+# a .taggerdb file to tell us what sqlite file to use.  If no
+# .taggerdb is found, use tags,db in the current directory.  TAGGER_DB
+# in the environment overrides this.
 
 get_db = lambda do |dir|
   file = File.join(dir, ".taggerdb")
