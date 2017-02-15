@@ -101,7 +101,7 @@ class PhotoWindow
   end
 
   def show_photo(filename)
-    @pixbuf = filename && Gdk::Pixbuf.new(file: filename)
+    @pixbuf = filename && GdkPixbuf::Pixbuf.new(file: filename)
     show_pixbuf
     GC.start
   end
@@ -131,8 +131,8 @@ class PhotoWindow
       @offset.x, @offset.y,
       min(@image.allocated_width, @scaled_pixbuf.width),
       min(@image.allocated_height, @scaled_pixbuf.height))
-    cropped_pixbuf = Gdk::Pixbuf.new(
-      @scaled_pixbuf, @crop.x, @crop.y, @crop.width, @crop.height)
+    cropped_pixbuf = @scaled_pixbuf.new_subpixbuf(
+      @crop.x, @crop.y, @crop.width, @crop.height)
     @image.set_pixbuf(cropped_pixbuf)
   end
 
