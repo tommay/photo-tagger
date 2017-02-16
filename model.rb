@@ -158,8 +158,8 @@ class Photo < Sequel::Model
 
   def self.compute_sha1(filename)
     GC.start
-    pixbuf = Gdk::Pixbuf.new(file: filename)	
-    pixels = pixbuf.pixels
+    pixbuf = GdkPixbuf::Pixbuf.new(file: filename)	
+    pixels = pixbuf.read_pixel_bytes
     row_width = pixbuf.width * pixbuf.n_channels * pixbuf.bits_per_sample / 8
     if row_width < pixbuf.rowstride
       stride = pixbuf.rowstride
