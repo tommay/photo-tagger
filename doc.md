@@ -187,3 +187,82 @@ directory, and when working in a .delete directory it is always
 next in directory.
 
 To remove the rating on a photo use the *-* (minus) key.
+
+# Command line utilities
+
+In addition to the gui, there are things that to mem are best done
+with command line utilities.
+
+The command line utilities are all subcommands of the "tag" command.
+
+Use "tag -h" or "tag subcommand -h" for help.
+
+## clean
+
+Get rid of cruft in directories and database:
+* remove .deleted directories
+* remove empty directories
+* remove .bak files
+* tag purge -r <directory> to remove database entries
+  without a corresponding file
+This is useful after a tagger session.
+
+## export
+
+Export sidecar xmp files for the given photos.  The files contain
+tags, rating, sha1, and taken time.
+
+## identical
+
+Lists databased photos identical to the given photo.
+
+## import
+
+Ensure the given photos are in the database.  If they have xmp siddecar
+files, their data is merged into the database.
+
+## list
+
+List files, directories, or tags in the database, optionally by
+create date.
+
+## purge
+
+Remove photos from the database with no corresponding file.
+
+## rate
+
+Add a rating to photos, possibly overriding existing ratings.
+
+## rename
+
+Rename a tag.  Does the right thing with photos that have the
+new or old tag names.
+
+A common workflow is to tag photos then do "tag list -t" to list the
+tags mosrt recently created first and use "tag rename ..." to fix typos.
+
+## tag
+
+Add or remove tags from photos.  Useful to add a tag to every photo in
+a directory.
+
+## tagged
+
+List files based on an expression including tags, rating, and date.
+
+This may be most useful if the output is xarged to some other progam,
+like a viewer.  E.g., "tag tagged -n vacation -r:45 | xargs -0 viewnior"
+will show top-rated vacation photos.
+
+This needs more explanation.
+
+_XXX Add an option to sort by the time the photo was taken._
+
+## untagged
+
+List untagged files.
+
+## unused
+
+List or delete unused tags.
