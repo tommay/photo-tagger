@@ -1,5 +1,17 @@
 Some quick doc so I don't forget how to use this.
 
+tagger can tagging and photos, and has features for organizing photos
+into directories based partially on photo date (even though tagger
+itself doesn't care where your photos are), and it can do some useful
+things like lossless rotation which is a common thing to do while
+importing/organizing photos.
+
+It keeps all its data in a sqlite3 database, but can also import from
+and export to standars xmp sidecar files so it can interoperate with
+other software.
+
+The database to use can be configured per-directory tree.
+
 # Usage
 
 tagger [file|directory]...
