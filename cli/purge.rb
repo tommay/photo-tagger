@@ -10,7 +10,7 @@ options = Trollop::options do
   banner <<EOS
 Usage: #{$0} [options] directory
 Remove photos from the database with no corresponding file.  Only
-photos from 
+photos from  XXX
 
 If a directory is given only photos from that directory are removed.
 EOS

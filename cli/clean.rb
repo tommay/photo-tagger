@@ -10,7 +10,7 @@ require "byebug"
 #   Remove .deleted directories
 #   Remove empty directories
 #   Remove .bak files
-#   tag purge -e <directory>
+#   tag purge -r <directory>
 
 options = Trollop::options do
   banner <<EOS
