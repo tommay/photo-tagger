@@ -21,20 +21,26 @@ EOS
     short: "n", long: "dry-run"
 end
 
-directory =
-  begin
-    Pathname.new(ARGV[0]).realpath.to_s
-  rescue Errno::ENOENT => ex
-    # Directory doesn't exist in the filesystem, assume it's been
-    # entered correctly.
-    ARGV[0]
-  end
-
 photos =
-  if options.recurse
-    Photo.where(Sequel.like(:directory, File.join(directory, "%")))
-  else
-    Photo.where(directory: directory)
+  begin
+    if File.file?(ARGV[0])
+      Array(Photo.find(ARGV[0]))
+    else
+      directory =
+        begin
+          Pathname.new(ARGV[0]).realpath.to_s
+        rescue Errno::ENOENT => ex
+          # Directory doesn't exist in the filesystem, assume it's been
+          # entered correctly.
+          ARGV[0]
+        end
+
+      if options.recurse
+        Photo.where(Sequel.like(:directory, File.join(directory, "%")))
+      else
+        Photo.where(directory: directory)
+      end
+    end
   end
 
 photos.each do |photo|
