@@ -20,35 +20,39 @@ EOS
   opt :created, "Order files/directories by (database) creation time, most recent first"
 end
 
-case
-when options.files
-  if options.created
-    Photo.order(Sequel.desc(:created_at)).each do |photo|
-      puts photo.filename
-    end
-  else
-    Photo.map do |photo|
-      photo.filename
-    end.sort.each do |filename|
-      puts filename
-    end
-  end
-when options.directories
-  if options.created
-    seen = {}
-    Photo.order(Sequel.desc(:created_at)).each do |photo|
-      if !seen[photo.directory]
-        puts photo.directory
-        seen[photo.directory] = true
+begin
+  case
+  when options.files
+    if options.created
+      Photo.order(Sequel.desc(:created_at)).each do |photo|
+        puts photo.filename
+      end
+    else
+      Photo.map do |photo|
+        photo.filename
+      end.sort.each do |filename|
+        puts filename
       end
     end
-  else
-    Photo.distinct.select(:directory).order(:directory).each do |photo|
-      puts photo.directory
+  when options.directories
+    if options.created
+      seen = {}
+      Photo.order(Sequel.desc(:created_at)).each do |photo|
+        if !seen[photo.directory]
+          puts photo.directory
+          seen[photo.directory] = true
+        end
+      end
+    else
+      Photo.distinct.select(:directory).order(:directory).each do |photo|
+        puts photo.directory
+      end
+    end
+  when options.tags
+    Tag.order(Sequel.desc(:created_at)).each do |tag|
+      puts "%-20s %s" % [tag.tag, tag.created_at]
     end
   end
-when options.tags
-  Tag.order(Sequel.desc(:created_at)).each do |tag|
-    puts "%-20s %s" % [tag.tag, tag.created_at]
-  end
+rescue Errno::EPIPE => ex
+  # The program we were piping into got ^C'd or something, no worries.
 end
