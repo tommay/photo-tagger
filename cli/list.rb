@@ -17,18 +17,35 @@ EOS
   opt :directories, "List directories in the database, sorted"
   opt :tags, "List tags in the database, most recent first"
   conflicts :files, :directories, :tags
+  opt :created, "Order files/directories by (database) creation time, most recent first"
 end
 
 case
 when options.files
-  Photo.map do |photo|
-    photo.filename
-  end.sort.each do |filename|
-    puts filename
+  if options.created
+    Photo.order(Sequel.desc(:created_at)).each do |photo|
+      puts photo.filename
+    end
+  else
+    Photo.map do |photo|
+      photo.filename
+    end.sort.each do |filename|
+      puts filename
+    end
   end
 when options.directories
-  Photo.distinct.select(:directory).order(:directory).each do |photo|
-    puts photo.directory
+  if options.created
+    seen = {}
+    Photo.order(Sequel.desc(:created_at)).each do |photo|
+      if !seen[photo.directory]
+        puts photo.directory
+        seen[photo.directory] = true
+      end
+    end
+  else
+    Photo.distinct.select(:directory).order(:directory).each do |photo|
+      puts photo.directory
+    end
   end
 when options.tags
   Tag.order(Sequel.desc(:created_at)).each do |tag|
