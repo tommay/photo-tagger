@@ -413,8 +413,14 @@ class Tagger
           if event.state != Gdk::ModifierType::CONTROL_MASK
             # Move to the next unrated photo, for quickly rating photos.
             next_photo do |filename|
-              photo = import_photo(filename)
-              !photo.rating
+              if File.directory?(filename)
+                # The next filename is a directory, e.g., we're moving
+                # through the argument list.  Just stop there.
+                true
+              else
+                photo = import_photo(filename)
+                !photo.rating
+              end
             end
           else
             # Stay on the current photo, just show the new rating.
