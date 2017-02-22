@@ -36,6 +36,7 @@ module Importer
           photo.set_rating(rating)
         end
       end
+      photo.save
     end
 
     # If requested, add tags from existing identical images.
@@ -50,6 +51,7 @@ module Importer
           photo.rating = identical.rating
         end
       end
+      photo.save
     end
 
     # If requested, purge identical images that no longer exist.  If
