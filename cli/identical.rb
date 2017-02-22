@@ -22,7 +22,8 @@ end
 process_args(ARGV, options.recurse) do |filename|
   begin
     photo = Importer.find_or_import_from_file(
-      filename, copy_tags: options.copy, purge_identical_images: options.purge,
+      filename, copy_tags_and_rating: options.copy,
+      purge_identical_images: options.purge,
       force_purge: options.force)
     identical = photo.identical
     if !identical.empty?

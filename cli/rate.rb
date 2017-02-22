@@ -18,7 +18,8 @@ process_args(ARGV, options.recurse) do |filename|
   begin
     photo =
       Importer.find_or_import_from_file(
-      filename, copy_tags: true, purge_identical_images: false,
+      filename, copy_tags_and_rating: true,
+      purge_identical_images: false,
       force_purge: false)
     if !photo.rating || options.force
       photo.rating = rating

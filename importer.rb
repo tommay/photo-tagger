@@ -2,9 +2,11 @@ require_relative "model"
 require_relative "xmp"
 
 module Importer
-  def self.find_or_import_from_file(filename, copy_tags: false,
-                                    purge_identical_images: false,
-                                    force_purge: false)
+  def self.find_or_import_from_file(
+        filename, copy_tags_and_rating: false,
+        purge_identical_images: false,
+        force_purge: false)
+    require "byebug"
     # Load an .xmp sidecar file is there is one.
 
     xmp_filename = "#{filename}.xmp"
@@ -39,10 +41,10 @@ module Importer
       photo.save
     end
 
-    # If requested, add tags from existing identical images.
+    # If requested, add tags and rating from existing identical images.
     # XXX this should be the default.
 
-    if copy_tags
+    if copy_tags_and_rating
       photo.identical.each do |identical|
         identical.tags.each do |tag|
           photo.add_tag(tag)

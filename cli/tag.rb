@@ -16,7 +16,7 @@ end
 
 process_args(ARGV, options.recurse) do |filename|
   photo = Importer.find_or_import_from_file(
-    filename, copy_tags: true, purge_identical_images: false,
+    filename, copy_tags_and_rating: true, purge_identical_images: false,
     force_purge: false)
 
   Photo.db.transaction do

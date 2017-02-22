@@ -513,7 +513,8 @@ class Tagger
 
   def import_photo(filename)
     Importer.find_or_import_from_file(
-      filename, copy_tags: true, purge_identical_images: true)
+      filename, copy_tags_and_rating: true,
+      purge_identical_images: true)
   end
 
   def save_recent_tags
