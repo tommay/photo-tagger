@@ -3,7 +3,7 @@
 require "bundler/setup"
 require "trollop"
 require "byebug"
-require_relative "../helpers"
+require_relative "helpers"
 require_relative "../importer"
 
 options = Trollop::options do
