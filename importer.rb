@@ -17,7 +17,8 @@ module Importer
     photo = Photo.find_or_create(filename) do |photo|
       # This is a new photo.  Fill in some things from xmp if we have
       # them.  Only constant values from the photo are set here, no
-      # user-supplued values.  This saves some (a lot of) time.
+      # user-supplied values.  Setting these from xmp saves some (a
+      # lot of) time.
       if xmp
         photo.sha1 = xmp.get_sha1
         photo.taken_time = xmp.get_taken_time
