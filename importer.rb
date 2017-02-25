@@ -6,7 +6,6 @@ module Importer
         filename, copy_tags_and_rating: false,
         purge_identical_images: false,
         force_purge: false)
-    require "byebug"
     # Load an .xmp sidecar file is there is one.
 
     xmp_filename = "#{filename}.xmp"
@@ -39,14 +38,19 @@ module Importer
           photo.set_rating(rating)
         end
       end
-      photo.save
+      photo.modified? && photo.save
     end
+
+    # Cache identical photos so we load it at most once.
+
+    identical_photos = nil
 
     # If requested, add tags and rating from existing identical images.
     # XXX this should be the default.
 
     if copy_tags_and_rating
-      photo.identical.each do |identical|
+      identical_photos ||= photo.identical
+      identical_photos.each do |identical|
         identical.tags.each do |tag|
           photo.add_tag(tag)
         end
@@ -54,14 +58,15 @@ module Importer
           photo.rating = identical.rating
         end
       end
-      photo.save
+      photo.modified? && photo.save
     end
 
     # If requested, purge identical images that no longer exist.  If
     # force_purge ten piurge them even if they do exist.
 
     if purge_identical_images
-      photo.identical.each do |identical|
+      identical_photos ||= photo.identical
+      identical_photos.each do |identical|
         if force_purge || !File.exist?(identical.filename)
           identical.destroy
         end
