@@ -4,6 +4,7 @@ require "bundler/setup"
 require "trollop"
 require "byebug"
 require_relative "../model"
+require_relative "helpers"
 
 # unused [-d]
 #   List or delete unused tags.

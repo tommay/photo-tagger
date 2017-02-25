@@ -7,6 +7,7 @@ require "pratt_parser"
 require "byebug"
 require_relative "../model"
 require_relative "../files"
+require_relative "helpers"
 
 options = Trollop::options do
   banner "Usage: #{$0} [-]tag..."
