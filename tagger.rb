@@ -619,11 +619,48 @@ class Tagger
   end
 
   def show_filename
-    date_string = @photo&.date_string
+    info = @photo && info_string(@photo)
+    @window.title = "Tagger: #{@photo ? @photo.filename : @directory}#{info ? " - #{info}" : ""}"
+  end
+
+  def info_string(photo)
+    date_string = photo.date_string
     if date_string
-      date_string = " (#{date_string})"
+      date_string += " - "
     end
-    @window.title = "Tagger: #{@photo ? @photo.filename : @directory} #{date_string}"
+    focal_length =
+      if photo.focal_length
+        photo.focal_length.to_i.to_s + "mm"
+      end
+    focal_length_35mm =
+      if photo.focal_length_35mm
+        "(" + photo.focal_length_35mm.to_i.to_s + "mm)"
+      end
+    aperture =
+      if photo.aperture
+        f = numeric_string(photo.aperture)
+        "f/#{f}"
+      end
+    exposure =
+      if photo.exposure_time
+        e = photo.exposure_time
+        if e < 1
+          s = numeric_string(1.0/e)
+          "1/#{s}"
+        else
+          numeric_string(e)
+        end
+      end
+    info = [date_string, focal_length, focal_length_35mm, aperture, exposure,
+            photo.make, photo.camera_model].compact
+    if info.size > 0
+      info.join(" ")
+    end
+  end
+
+  def numeric_string(float)
+    s = "%.1f" % float
+    s.sub(/\.0*$/, "")
   end
 
   def show_rating

@@ -47,6 +47,13 @@ module Model
       column :filedate, DateTime, null: false # Date file was modified.
       column :taken_time, String, size: 100, null: true
       column :rating, Integer, null: true
+      column :focal_length, Numeric, null: true
+      column :focal_length_35mm, Numeric, null: true
+      column :aperture, Numeric, null: true
+      column :exposure_time, Numeric, null: true
+      column :make, String, size: 100, null: true
+      # This can't be called just "model" since Photo.model is "Photo".
+      column :camera_model, String, size: 100, null: true
       column :created_at, DateTime, null: false # Date this row was updated.
 
       unique [:directory, :basename]
@@ -124,31 +131,21 @@ class Photo < Sequel::Model
 
       photo.filedate ||= File.mtime(photo.filename)
       photo.created_at ||= Time.now
-      photo.taken_time ||= extract_time(photo.filename)
+
+      ExifData.new(photo.filename).tap do |exif_data|
+        photo.taken_time    ||= exif_data.get_taken_time
+        photo.focal_length  ||= exif_data.get_real("Exif.Photo.FocalLength")
+        photo.focal_length_35mm ||=
+          exif_data.get_real("Exif.Photo.FocalLengthIn35mmFilm")
+        photo.aperture      ||= exif_data.get_real("Exif.Photo.FNumber")
+        photo.exposure_time ||= exif_data.get_real("Exif.Photo.ExposureTime")
+        photo.make          ||= exif_data.get_string("Exif.Image.Make")
+        photo.camera_model  ||= exif_data.get_string("Exif.Image.Model")
+      end
 
       if !photo.sha1
         photo.set_sha1
       end
-    end
-  end
-
-  def self.extract_time(filename)
-    # exiftool goes to great lengths to deal with non-conforming
-    # dates.  No idea what exiv2 does if anything, other than writing
-    # lots of warnings to stderr.
-    date =
-      begin
-        exiv2 = Exiv2::ImageFactory.open(filename)
-        exiv2.read_metadata
-        exiv2.exif_data["Exif.Photo.DateTimeOriginal"]
-      rescue
-        nil
-      end
-    date = date.first if Array === date
-    if date && date != "" && date !~ /^0/
-      date, time = date.split(" ")
-      date.gsub!(/:/, "-")
-      "#{date} #{time}"
     end
   end
 
@@ -231,6 +228,64 @@ class Photo < Sequel::Model
   def set_rating(rating)
     self.rating = rating
     self.save
+  end
+
+  class ExifData
+    def initialize(filename)
+      @filename = filename
+    end
+
+    def get_string(name)
+      with_exif_data do |exif_data|
+        exif_data[name]
+      end
+    end
+
+    def with_exif_data(&block)
+      if !@exif_data
+        @exif_data =
+          begin
+            exiv2 = Exiv2::ImageFactory.open(@filename)
+            exiv2.read_metadata
+            exiv2.exif_data.to_h
+          rescue
+            :failed
+          end
+      end
+      if @exif_data != :failed
+        block.call(@exif_data)
+      end
+    end
+
+    def get_real(name)
+      string = get_string(name)
+      if string
+        n = string.split("/")
+        r =
+          case n.size
+          when 1
+            n[0].to_f
+          when 2
+            n[0].to_f / n[1].to_f
+          else
+            raise "Bad real: #{string}"
+          end
+        r != 0 ? r : nil
+      end
+    end
+
+    def get_taken_time
+      # exiftool goes to great lengths to deal with non-conforming
+      # dates.  No idea what exiv2 does if anything, other than writing
+      # lots of warnings to stderr.
+      date = get_string("Exif.Photo.DateTimeOriginal")
+      date = date.first if Array === date
+      if date && date != "" && date !~ /^0/
+        date, time = date.split(" ")
+        date.gsub!(/:/, "-")
+        "#{date} #{time}"
+      end
+    end
   end
 end
 
