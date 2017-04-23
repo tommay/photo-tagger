@@ -7,6 +7,7 @@ cmd = ARGV.shift
 cli = File.join(File.dirname(Pathname.new(__FILE__).realpath), "cli")
 cmd_file = File.join(cli, "#{cmd}.rb")
 if File.exist?(cmd_file)
+  $0 = "#{$0} #{cmd}"
   load cmd_file
 else
   puts "#{$0} commands:"
