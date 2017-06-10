@@ -22,6 +22,8 @@ class Tagger
   def initialize(args)
     GC.start
     init_ui
+
+    STDIN.reopen("/dev/null")
     byebug
 
     @recent = SaveList.new([])
