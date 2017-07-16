@@ -43,7 +43,7 @@ class Lexer
   # where tag is a string of non-blanks or delimited by double quotes
   # and date is a string of digits and dashes, any prefix of
   # yyyy-mm-dd.  TOKENS matches each token in the expression.  -tag
-  # yields two tokens: AndNotToken which is an operator, and
+  # yields two tokens: ButNotToken which is an operator, and
   # LikeTagToken(tag).  AndToken is generated automatically between
   # two tag or date tokens that don't have an explicit operator (+ or
   # -) between them.  All operators have the same precedence and are
