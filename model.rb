@@ -159,10 +159,12 @@ class Photo < Sequel::Model
     pixels = pixbuf.read_pixel_bytes
     row_width = pixbuf.width * pixbuf.n_channels * pixbuf.bits_per_sample / 8
     if row_width < pixbuf.rowstride
+      # XXX It may be better to use pixels.slice each time through the loop.
+      pixel_string = pixels.to_str
       stride = pixbuf.rowstride
       digest = Digest::SHA1.new
       0.upto(pixbuf.height - 1) do |row|
-        digest << pixels[row * stride, row_width]
+        digest << pixel_string[row * stride, row_width]
       end
       digest.base64digest
     else
