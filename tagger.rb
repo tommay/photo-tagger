@@ -825,14 +825,18 @@ class Tagger
   end
 
   def move_photo(photo, new_directory)
-    if !File.exist?(new_directory) # XXX && ask_create(new_directory)
-      FileUtils.mkdir_p(new_directory)
+    if !File.exist?(new_directory)
+      if question_dialog("Create #{new_directory}?")
+        FileUtils.mkdir_p(new_directory)
+      end
     end
 
-    move_related_files(photo.filename, new_directory)
+    if File.exist?(new_directory)
+      move_related_files(photo.filename, new_directory)
 
-    photo.directory = new_directory
-    photo.save
+      photo.directory = new_directory
+      photo.save
+    end
   end
 
   def move_related_files(filename, dst_dir)
