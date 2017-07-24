@@ -885,6 +885,18 @@ class Tagger
     dialog.destroy
   end
 
+  def question_dialog(question)
+    dialog = Gtk::MessageDialog.new(
+      type: Gtk::MessageType::QUESTION,
+      message: question,
+      buttons: Gtk::ButtonsType::YES_NO,
+      parent: @window,
+      flags: Gtk::DialogFlags::DESTROY_WITH_PARENT)
+    response = dialog.run
+    dialog.destroy
+    response == Gtk::ResponseType::YES
+  end
+
   def rename_photos_directory(new_directory)
     if File.exist?(new_directory)
       raise "#{new_directory} already exists"
