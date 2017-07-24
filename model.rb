@@ -238,7 +238,7 @@ class Photo < Sequel::Model
   end
 
   def lock(protected = true)
-    self.protected = protected
+    self.protected = protected ? 1 : 0
     self.save
   end
 
