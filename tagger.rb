@@ -242,6 +242,17 @@ class Tagger
           end
           true
         end
+      when Gdk::Keyval::KEY_l
+        if @photo && !tagging?
+          case event.state
+          when Gdk::ModifierType::CONTROL_MASK
+            @photo.lock
+            true
+          when Gdk::ModifierType::MOD1_MASK
+            @photo.unlock
+            true
+          end
+        end
       when Gdk::Keyval::KEY_Delete
         if @photo
           # When working in .deleted directories, always move to the next file.

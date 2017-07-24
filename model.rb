@@ -54,6 +54,7 @@ module Model
       column :make, String, size: 100, null: true
       # This can't be called just "model" since Photo.model is "Photo".
       column :camera_model, String, size: 100, null: true
+      column :protected, Boolean, null: false
       column :created_at, DateTime, null: false # Date this row was updated.
 
       unique [:directory, :basename]
@@ -230,6 +231,19 @@ class Photo < Sequel::Model
   def set_rating(rating)
     self.rating = rating
     self.save
+  end
+
+  def locked?
+    self.protected != 0
+  end
+
+  def lock(protected = true)
+    self.protected = protected
+    self.save
+  end
+
+  def unlock
+    lock(false)
   end
 
   class ExifData
