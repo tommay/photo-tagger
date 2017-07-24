@@ -254,7 +254,8 @@ class Tagger
           end
         end
       when Gdk::Keyval::KEY_Delete
-        if @photo
+        if @photo && 
+           (!@photo.locked? || question_dialog("Deleted locked photo?"))
           # When working in .deleted directories, always move to the next file.
           if @photo.deleted?
             @get_next = get_next_in_directory
