@@ -102,7 +102,6 @@ class PhotoWindow
 
   def show_photo(filename)
     @pixbuf = filename && GdkPixbuf::Pixbuf.new(file: filename)
-if true
 
 #    p = @pixbuf.read_pixel_bytes  # GLib::Bytes
 #    p = @pixbuf.pixels            # Array of Integer (slowish)
@@ -131,12 +130,11 @@ if true
 #      colorspace: @pixbuf.colorspace, bits_per_sample: @pixbuf.bits_per_sample,
 #      has_alpha: false, row_stride: @pixbuf.rowstride)
 #    p = (0...(3*10000)).map{64}
-    byebug
     @pixbuf = GdkPixbuf::Pixbuf.new(
       data: z, width: @pixbuf.width, height: @pixbuf.height,
       colorspace: @pixbuf.colorspace, bits_per_sample: @pixbuf.bits_per_sample,
       has_alpha: false, row_stride: @pixbuf.width * 3)
-end
+    byebug
     show_pixbuf
     GC.start
   end
