@@ -105,7 +105,7 @@ class PhotoWindow
 
 #    p = @pixbuf.read_pixel_bytes  # GLib::Bytes
 #    p = @pixbuf.pixels            # Array of Integer (slowish)
-    z = Array.new(@pixbuf.width * @pixbuf.height * 3)
+    z = String.new(capacity: @pixbuf.width * @pixbuf.height * 3)
     (0...@pixbuf.height).each do |row|
       i = row * @pixbuf.rowstride
       (0...@pixbuf.width).each do |col|
@@ -116,7 +116,10 @@ class PhotoWindow
               else
                 0xFF
               end
-          z[j] = z[j+1] = z[j+2] = c
+          #z[j] = z[j+1] = z[j+2] = c
+          z << c
+          z << c
+          z << c
         else
           z[j] = p[j]
           z[j+1] = p[j+1]
@@ -131,7 +134,7 @@ class PhotoWindow
 #      has_alpha: false, row_stride: @pixbuf.rowstride)
 #    p = (0...(3*10000)).map{64}
     @pixbuf = GdkPixbuf::Pixbuf.new(
-      data: z, width: @pixbuf.width, height: @pixbuf.height,
+      bytes: z, width: @pixbuf.width, height: @pixbuf.height,
       colorspace: @pixbuf.colorspace, bits_per_sample: @pixbuf.bits_per_sample,
       has_alpha: false, row_stride: @pixbuf.width * 3)
     byebug
