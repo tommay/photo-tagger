@@ -102,7 +102,36 @@ class PhotoWindow
 
   def show_photo(filename)
     @pixbuf = filename && GdkPixbuf::Pixbuf.new(file: filename)
+    show_pixbuf
+    GC.start
+  end
 
+  def show_pixbuf
+    if @pixbuf
+      @scale_factor = compute_scale(@scale, @image, @pixbuf)
+      scale_pixbuf(@scale_factor)
+      @offset = bound_offset(@offset)
+      show_scaled_pixbuf
+    else
+      @image.set_pixbuf(nil)
+    end
+  end
+
+  def scale_pixbuf(scale)
+    if scale != @last_scale || @pixbuf != @last_pixbuf
+      @last_scale = scale
+      @last_pixbuf = @pixbuf
+      @scaled_pixbuf =
+        @pixbuf.scale(@pixbuf.width * scale, @pixbuf.height * scale)
+      @scaled_pixbuf = zebrafy(@scaled_pixbuf)
+    end
+  end
+
+  def zebrafy(pixbuf)
+    pixbuf
+  end
+
+if false
 #    p = @pixbuf.read_pixel_bytes  # GLib::Bytes
 #    p = @pixbuf.pixels            # Array of Integer (slowish)
     z = String.new(capacity: @pixbuf.width * @pixbuf.height * 3)
@@ -138,29 +167,7 @@ class PhotoWindow
       colorspace: @pixbuf.colorspace, bits_per_sample: @pixbuf.bits_per_sample,
       has_alpha: false, row_stride: @pixbuf.width * 3)
     byebug
-    show_pixbuf
-    GC.start
-  end
-
-  def show_pixbuf
-    if @pixbuf
-      @scale_factor = compute_scale(@scale, @image, @pixbuf)
-      scale_pixbuf(@scale_factor)
-      @offset = bound_offset(@offset)
-      show_scaled_pixbuf
-    else
-      @image.set_pixbuf(nil)
-    end
-  end
-
-  def scale_pixbuf(scale)
-    if scale != @last_scale || @pixbuf != @last_pixbuf
-      @last_scale = scale
-      @last_pixbuf = @pixbuf
-      @scaled_pixbuf =
-        @pixbuf.scale(@pixbuf.width * scale, @pixbuf.height * scale)
-    end
-  end
+end
 
   def show_scaled_pixbuf
     @crop = Crop.new(
