@@ -128,46 +128,35 @@ class PhotoWindow
   end
 
   def zebrafy(pixbuf)
-    pixbuf
-  end
-
-if false
-#    p = @pixbuf.read_pixel_bytes  # GLib::Bytes
-#    p = @pixbuf.pixels            # Array of Integer (slowish)
-    z = String.new(capacity: @pixbuf.width * @pixbuf.height * 3)
-    (0...@pixbuf.height).each do |row|
-      i = row * @pixbuf.rowstride
-      (0...@pixbuf.width).each do |col|
+    pixels = pixbuf.pixels            # Array of Integer (slowish)
+#    p = pixbuf.read_pixel_bytes  # GLib::Bytes
+    zebra = String.new(capacity: pixbuf.width * pixbuf.height * 3)
+    (0 ... pixbuf.height).each do |row|
+      i = row * pixbuf.rowstride
+      (0 ... pixbuf.width).each do |col|
         j = i + col*3
-        if true or p[i] == 0xFF && p[i+1] == 0xFF && p[i+2] == 0xFF
-          c = if ((row + col) % 10) < 5
+        if pixels[j] == 0xFF && pixels[j+1] == 0xFF && pixels[j+2] == 0xFF
+          c = if ((row + col) % 6) < 4
                 0x40
               else
-                0xFF
+                0xD0
               end
-          #z[j] = z[j+1] = z[j+2] = c
-          z << c
-          z << c
-          z << c
+          zebra << c
+          zebra << c
+          zebra << c
         else
-          z[j] = p[j]
-          z[j+1] = p[j+1]
-          z[j+2] = p[j+2]
+          zebra << pixels[j].chr
+          zebra << pixels[j+1].chr
+          zebra << pixels[j+2].chr
         end
       end
     end
 
-#    @pixbuf = GdkPixbuf::Pixbuf.new(
-#      data: p, width: @pixbuf.width, height: @pixbuf.height,
-#      colorspace: @pixbuf.colorspace, bits_per_sample: @pixbuf.bits_per_sample,
-#      has_alpha: false, row_stride: @pixbuf.rowstride)
-#    p = (0...(3*10000)).map{64}
-    @pixbuf = GdkPixbuf::Pixbuf.new(
-      bytes: z, width: @pixbuf.width, height: @pixbuf.height,
-      colorspace: @pixbuf.colorspace, bits_per_sample: @pixbuf.bits_per_sample,
-      has_alpha: false, row_stride: @pixbuf.width * 3)
-    byebug
-end
+    GdkPixbuf::Pixbuf.new(
+      bytes: zebra, width: pixbuf.width, height: pixbuf.height,
+      colorspace: pixbuf.colorspace, bits_per_sample: pixbuf.bits_per_sample,
+      has_alpha: false, row_stride: pixbuf.width * 3)
+  end
 
   def show_scaled_pixbuf
     @crop = Crop.new(
