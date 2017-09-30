@@ -242,6 +242,17 @@ class Tagger
           end
           true
         end
+      when Gdk::Keyval::KEY_o
+        if @photo && !tagging?
+          case event.state
+          when Gdk::ModifierType::CONTROL_MASK
+            zebra(true)
+            true
+          when Gdk::ModifierType::MOD1_MASK
+            zebra(false)
+            true
+          end
+        end
       when Gdk::Keyval::KEY_l
         if @photo && !tagging?
           case event.state
@@ -682,7 +693,7 @@ class Tagger
   end
 
   def show_photo
-    @photo_window.show_photo(@photo&.filename)
+    @photo_window.show_photo(@photo&.filename, @zebra)
   end
 
   def add_tag(string)
@@ -1064,6 +1075,13 @@ class Tagger
     id = GLib::Idle.add do
       block.call
       GLib::Source.remove(id)
+    end
+  end
+
+  def zebra(on)
+    if @zebra != on
+      @zebra = on
+      show_photo
     end
   end
 end

@@ -100,7 +100,7 @@ class PhotoWindow
     show_pixbuf
   end
 
-  def show_photo(filename)
+  def show_photo(filename, zebra)
     @pixbuf = filename && GdkPixbuf::Pixbuf.new(file: filename)
     show_pixbuf
     GC.start
