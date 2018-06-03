@@ -51,7 +51,7 @@ either a file or a directory.
 * C-n/C-p moves to the next/previous directory in the file system.
 
 * C-spc sets the "mark" to the current photo.  This is useful to mark the first
-of a bunch of photos, then go through and tage them, then C-x back to the
+of a bunch of photos, then go through and tag them, then C-x back to the
 marked photo at the beginning to rate them.
 
 * C-x switches between the current and marked photos.  The current photo
