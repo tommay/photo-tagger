@@ -123,7 +123,7 @@ class PhotoWindow
       @last_pixbuf = @pixbuf
       @scaled_pixbuf =
         @pixbuf.scale(@pixbuf.width * scale, @pixbuf.height * scale)
-      @scaled_pixbuf = zebrafy(@scaled_pixbuf)
+      # @scaled_pixbuf = zebrafy(@scaled_pixbuf)
     end
   end
 
