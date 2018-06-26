@@ -54,7 +54,7 @@ module Model
       column :make, String, size: 100, null: true
       # This can't be called just "model" since Photo.model is "Photo".
       column :camera_model, String, size: 100, null: true
-      column :protected, :boolean, null: false
+      column :protected, :boolean, null: false, default: 0
       column :created_at, DateTime, null: false # Date this row was updated.
 
       unique [:directory, :basename]
