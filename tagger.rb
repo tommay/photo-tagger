@@ -23,8 +23,8 @@ class Tagger
     GC.start
     init_ui
 
-    STDIN.reopen("/dev/null")
-    byebug
+    #STDIN.reopen("/dev/null")
+#    byebug
 
     @recent = SaveList.new([])
     @history = Rotator.new
