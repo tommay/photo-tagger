@@ -175,7 +175,7 @@ list actualy add the tag instead of just auto-completing the text box.
 * *>* goes the other way in the list of applied tags.
 
 Note that tags are applied or removed immediately.  What you see in
-the top section is that the photo's tags _are_, not what they will be.
+the top section is what the photo's tags _are_, not what they will be.
 _There is currently no easy way to get a photo's original tags if you
 mess them up._
 
