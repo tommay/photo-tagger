@@ -12,7 +12,12 @@ options = Trollop::options do
   opt :recurse, "Recurse into directories"
 end
 
-rating = ARGV.shift.to_i
+# XXX Why doesn't setting rating to nil work?
+rating =
+  begin
+    arg = ARGV.shift
+    arg == "null" ? nil : arg.to_i
+  end
 
 process_args(ARGV, options.recurse) do |filename|
   begin
