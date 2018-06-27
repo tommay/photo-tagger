@@ -54,7 +54,10 @@ module Model
       column :make, String, size: 100, null: true
       # This can't be called just "model" since Photo.model is "Photo".
       column :camera_model, String, size: 100, null: true
-      column :protected, :boolean, null: false, default: 0
+      # XXX This would be better as :boolean instead of Integer.  But, it's
+      # Integer for better or for worse, and the code needs to use 1 and 0
+      # instead of true and false.
+      column :protected, Integer, null: false, default: 0
       column :created_at, DateTime, null: false # Date this row was updated.
 
       unique [:directory, :basename]
