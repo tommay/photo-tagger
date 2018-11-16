@@ -21,6 +21,24 @@ options = Optimist::options do
   conflicts :null, :tags, :ugly
   conflicts :directories, :tags, :ugly
   stop_on_unknown
+  # tag may be:
+  #   a simple string (non-blanks or double-quote delimited) to find photos
+  #     tagged with that string
+  #     % is a wildcard character that matches any string
+  #   <date to find photos taken before date
+  #   =date to find photos taken on a particular date
+  #   >date to find photos taken after date
+  #     dates look like YYYY-MM-DD and may be partial dates, so for example
+  #     "=2013" will find all photos taken in 2013 and ">2012-10" will find
+  #     all photos taken after the beginning of 2012-10.
+  #  r:[12345]* to find all pictures with a particular rating or ratings,
+  #    e.g., r:12 will find photos rated 1 and 2.  r: with no list will
+  #    find unrated photos.
+  # Any of the above "tags" may be preceeded by "-" to exclude matching photos.
+  # Multiple tags separated by spaces will be combined so that only photos
+  #   matching both tags will be returned.
+  # Tags separated with "+" will return the union of both tags' matches.
+  # Parentheses may be used to create complex expressions.
 end
 
 terminator = (options.nul || options.null) ? "\0" : "\n"
