@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "trollop"
+require "optimist"
 require "byebug"
 
 require_relative "helpers"
 require_relative "../importer"
 
-options = Trollop::options do
+options = Optimist::options do
   banner "Usage: #{$0} [options] file|directory..."
   opt :add, "Add tag to images", type: String, multi: true
   opt :remove, "Remove tag from images", short: :R, type: String, multi: true

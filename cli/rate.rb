@@ -1,12 +1,12 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "trollop"
+require "optimist"
 require "byebug"
 require_relative "helpers"
 require_relative "../importer"
 
-options = Trollop::options do
+options = Optimist::options do
   banner "Usage: #{$0} [options] rating file|directory..."
   opt :force, "Change rating if already rated"
   opt :recurse, "Recurse into directories"

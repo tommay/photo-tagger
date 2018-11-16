@@ -1,12 +1,12 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "trollop"
+require "optimist"
 require "byebug"
 require_relative "helpers"
 require_relative "../importer"
 
-options = Trollop::options do
+options = Optimist::options do
   banner <<EOS
 Add images to the database by filename if they don't already exist.
 Also read xmp sidecar files and add tags and rating to the database.

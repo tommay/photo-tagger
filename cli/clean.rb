@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "trollop"
+require "optimist"
 require "fileutils"
 require "byebug"
 
@@ -12,7 +12,7 @@ require "byebug"
 #   Remove .bak files
 #   tag purge -r <directory>
 
-options = Trollop::options do
+options = Optimist::options do
   banner <<EOS
 Usage: #{$0} directory...
 Get rid of cruft in directories and database:

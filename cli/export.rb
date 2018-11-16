@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "trollop"
+require "optimist"
 require "byebug"
 require_relative "helpers"
 require_relative "../exporter"
@@ -10,7 +10,7 @@ require_relative "../exporter"
 #   If there's a matching image file by name, then export its tags
 #   to an xmp sidecar file, adding to any existing tags (?).
 
-options = Trollop::options do
+options = Optimist::options do
   banner <<EOS
 Usage: #{$0} [options] file|directory...
 Export from database to .xmp sidecar files: sha1, tags, rating.

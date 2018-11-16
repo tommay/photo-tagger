@@ -4,7 +4,7 @@ gem "gtk3"
 gem "sequel"
 gem "sqlite3"
 gem "nokogiri"
-gem "trollop"
+gem "optimist"
 gem "exiv2"
 gem "pratt_parser"
 

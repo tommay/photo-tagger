@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "trollop"
+require "optimist"
 require "byebug"
 require_relative "../model"
 require_relative "helpers"
@@ -10,7 +10,7 @@ require_relative "helpers"
 #   List or delete unused tags.
 #   -d delete unused tags.
 
-options = Trollop::options do
+options = Optimist::options do
   banner <<EOS
 Usage: #{$0} [options]
 List or delete unused tags.

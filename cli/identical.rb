@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "trollop"
+require "optimist"
 require "pathname"
 require "byebug"
 require_relative "helpers"
@@ -11,7 +11,7 @@ require_relative "../model"
 # identical file
 #   List all the databased files identical to filename.
 
-options = Trollop::options do
+options = Optimist::options do
   banner <<EOS
 Usage: #{$0} [options] file|directory
 List all databases files identical to filename.

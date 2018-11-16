@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "trollop"
+require "optimist"
 require "byebug"
 
 require_relative "../model"
 require_relative "../files"
 
-p = Trollop::Parser.new do
+p = Optimist::Parser.new do
   banner <<EOS
 Usage: #{$0} old new
 Rename a tag from old to new.  Useful for fixing typos.
@@ -16,9 +16,9 @@ This does the right thing whether or not new tag already exists.
 EOS
 end
 
-opts = Trollop::with_standard_exception_handling(p) do
+opts = Optimist::with_standard_exception_handling(p) do
   p.parse(ARGV).tap do |o|
-    raise Trollop::HelpNeeded if ARGV.size != 2
+    raise Optimist::HelpNeeded if ARGV.size != 2
   end
 end
 

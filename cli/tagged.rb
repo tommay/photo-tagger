@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "trollop"
+require "optimist"
 require "strscan"
 require "pratt_parser"
 require "byebug"
@@ -9,7 +9,7 @@ require_relative "../model"
 require_relative "../files"
 require_relative "helpers"
 
-options = Trollop::options do
+options = Optimist::options do
   banner "Usage: #{$0} [-]tag..."
   opt :nul, "Nul-terminate output filenames"
   opt :null, "Same as --nul"

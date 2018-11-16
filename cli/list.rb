@@ -1,12 +1,12 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "trollop"
+require "optimist"
 require "byebug"
 require_relative "../model"
 require_relative "helpers"
 
-options = Trollop::options do
+options = Optimist::options do
   banner <<EOS
 Usage: #{$0} [options]
 List files, directories, or tags in the database.

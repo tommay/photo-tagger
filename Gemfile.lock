@@ -35,6 +35,7 @@ GEM
     native-package-installer (1.0.6)
     nokogiri (1.8.5)
       mini_portile2 (~> 2.3.0)
+    optimist (3.0.0)
     pango (3.3.0)
       cairo-gobject (= 3.3.0)
       gobject-introspection (= 3.3.0)
@@ -42,7 +43,6 @@ GEM
     pratt_parser (0.1.2)
     sequel (5.14.0)
     sqlite3 (1.3.13)
-    trollop (2.9.9)
 
 PLATFORMS
   ruby
@@ -52,10 +52,10 @@ DEPENDENCIES
   exiv2
   gtk3
   nokogiri
+  optimist
   pratt_parser
   sequel
   sqlite3
-  trollop
 
 BUNDLED WITH
    1.16.6

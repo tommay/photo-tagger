@@ -1,12 +1,12 @@
 #!/usr/bin/env ruby
 
 require "bundler/setup"
-require "trollop"
+require "optimist"
 require "pathname"
 require "byebug"
 require_relative "../model"
 
-options = Trollop::options do
+options = Optimist::options do
   banner <<EOS
 Usage: #{$0} [options] directory
 Remove photos from the database with no corresponding file.  Only
