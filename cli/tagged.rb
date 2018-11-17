@@ -162,7 +162,7 @@ class Lexer
       if ratings == ""
         Photo.where(rating: nil)
       else
-        Photo.where(rating: ratings.each_char.map{|c| c.to_i})
+        Photo.where(rating: ratings.each_char.map(&:to_i))
       end
     end
   end
