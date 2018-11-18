@@ -131,7 +131,7 @@ class PhotoWindow
       @offset.x, @offset.y,
       min(@image.allocated_width, @scaled_pixbuf.width),
       min(@image.allocated_height, @scaled_pixbuf.height))
-    cropped_pixbuf = @scaled_pixbuf.new_subpixbuf(
+    cropped_pixbuf = @scaled_pixbuf.subpixbuf(
       @crop.x, @crop.y, @crop.width, @crop.height)
     @image.set_pixbuf(cropped_pixbuf)
   end
