@@ -275,6 +275,10 @@ _XXX Add an option to sort by the time the photo was taken._
 
 List untagged files.
 
+### List directories under the current directory with untagged photos
+
+`tag untagged -d -r .`
+
 ## unused
 
 List or delete unused tags.
