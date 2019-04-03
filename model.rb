@@ -22,6 +22,7 @@ module Model
     need_schema = !File.exist?(file)
 
     # A Sqlite3 connection to a persistent database
+    # To log SQL statements set logger.level to Logger::INFO.
 
     Sequel.connect(
       "sqlite:#{file}",
