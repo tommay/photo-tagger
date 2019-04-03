@@ -20,7 +20,8 @@ EOS
   opt :destroy, "Delete unused tags", long: :delete, short: :d
 end
 
-Tag.left_join(:photos_tags, :tag_id => :id).where(photos_tags__tag_id: nil).each do |tag|
+Tag.left_join(:photos_tags, :tag_id => :id)
+    .where(Sequel[:photos_tags][:tag_id] => nil).each do |tag|
   if options.destroy
     tag.destroy
   else
