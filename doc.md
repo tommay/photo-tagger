@@ -282,3 +282,47 @@ List untagged files.
 ## unused
 
 List or delete unused tags.
+
+# Cook book
+
+## Find directories with untagged photos:
+
+`tag untagged -d -r .`
+
+## Find directories with unrated photos:
+
+`tag tagged -d r:`
+
+## Remove unused tags:
+
+`tag unused -d`
+
+## List directories in the dataase:
+
+`tag list -d`
+
+## List tags in the database, e.g., to find typos:
+
+`tag list -t`
+
+## Rename a tag:
+
+`tag rename <old> <new>`
+
+## Remove database entries with no corresponding file:
+
+`tag purge -n <directory>`
+
+then
+
+`tag purge -v <directory>`
+
+## Remove database entries even if the file exists, e.g., the file is
+tagged in the wrong database:
+
+`tag purge -f -n <directory>`
+
+then
+
+`tag purge -f -v <directory>`
+
