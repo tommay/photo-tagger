@@ -10,7 +10,7 @@ GEM
     cairo-gobject (3.3.6)
       cairo (>= 1.16.2)
       glib2 (= 3.3.6)
-    exiv2 (0.0.8)
+    exiv2 (0.0.9)
     gdk3 (3.3.6)
       cairo-gobject (= 3.3.6)
       gdk_pixbuf2 (= 3.3.6)
