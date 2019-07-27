@@ -32,7 +32,7 @@ module Files
     case
     when (top || recurse) && File.directory?(filename) &&
          !Files.deleted?(filename)
-      Dir[File.join(filename, "*")].each do |f|
+      (Dir[File.join(filename, "*")] rescue []).each do |f|
         enumerate_image_files(f, recurse, false, yielder)
       end
     when image_file?(filename)
