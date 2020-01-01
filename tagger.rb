@@ -383,6 +383,7 @@ class Tagger
           @photo && Gtk::Clipboard.get(Gdk::Selection::CLIPBOARD).tap do |c|
             filename = @photo.filename
                        .sub(%r{^.*/host/}, "c:/users/tom/")
+                       .sub(%r{^/home/tom/D/}, "c:/users/tom/Desktop/")
                        .gsub(%r{/}, "\\")
             c.set_text(filename)
             c.store
