@@ -31,7 +31,10 @@ module Model
       end
     ).tap do |db|
       db.use_timestamp_timezones = true
-      db.run("pragma journal_mode = truncate")
+      # wal is a lot faster than truncate.  Running "tag import -r -c -p"
+      # on 22k images takes 60 minutes with wal vs. 110 with truncate.
+      # wal with the .db on /tmp (tmpfs) takes 50 minutes.
+      db.run("pragma journal_mode = wal")
 
       if need_schema
         create_schema(db)
