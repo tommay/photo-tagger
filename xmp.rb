@@ -10,14 +10,25 @@ class Xmp
     "tg" => "http://tagger.tommay.net/",
   }.freeze
 
+  # I want to_xml (below) to return nicely formatted xml.  But it
+  # seems that if there is a newline Text node as a child of xmpmeta
+  # then the output isn't formatted.  Using "noblanks" should suppress
+  # this but it doesn't.  So use gsub here to get rid of the newlines.
+  # Strings read back from existing xmp files are ok because they
+  # don't have empty nodes.  XXX That may not be true for files
+  # created by arbitrary programs.
+  #
   MINIMAL = <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="XMP Core 4.4.0-Exiv2">
 </x:xmpmeta>
 EOF
+  .gsub("\n", "")
 
   def initialize(string=MINIMAL)
-    @xmp = Nokogiri::XML(string)
+    @xmp = Nokogiri::XML(string) do |config|
+      config.default_xml.noblanks
+    end
   end
 
   def get_tags
@@ -95,6 +106,6 @@ EOF
   end
 
   def to_s
-    @xmp.to_xml
+    @xmp.to_xml(indent: 2)
   end
 end
