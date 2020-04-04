@@ -62,7 +62,10 @@ module Model
       # Integer for better or for worse, and the code needs to use 1 and 0
       # instead of true and false.
       column :protected, Integer, null: false, default: 0
-      column :created_at, DateTime, null: false # Date this row was updated.
+      column :created_at, DateTime, null: false # Date this row was created.
+      # Date anything related to this photo was modified.  This is tracked
+      # to determine whether the photo's sidecar xmp needs to be updated.
+      column :modified_at, DateTime, null: false
 
       unique [:directory, :basename]
       index :sha1
@@ -128,8 +131,15 @@ class Photo < Sequel::Model
   # Don't need this with on_delete cascade.
   plugin :association_dependencies, tags: :nullify
 
+  # before_save is called before before_create.
+  # See https://github.com/jeremyevans/sequel/blob/master/doc/model_hooks.rdoc
+
+  def before_save
+    self.modified_at = Time.now
+  end
+
   def before_create
-    self.created_at = Time.now
+    self.created_at = self.modified_at
   end
 
   def self.find_or_create(filename, &block)
