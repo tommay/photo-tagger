@@ -367,7 +367,7 @@ class Tagger
         end
       when Gdk::Keyval::KEY_e
         if event.state == Gdk::ModifierType::CONTROL_MASK
-          @photo && Exporter.export_photo_to_sidecar(@photo)
+          @photo && Exporter.export_photo_to_sidecar(@photo, merge: false)
           true
         end
       when Gdk::Keyval::KEY_c

@@ -2,23 +2,25 @@ require_relative "model"
 require_relative "xmp"
 
 module Exporter
-  def self.export_to_sidecar(filename)
+  def self.export_to_sidecar(filename, merge: false)
     # Find a database entry if we have one.  If we don't, there is
     # nothing to export.
 
     photo = Photo.find(filename)
-    photo && export_photo_to_sidecar(photo)
+    photo && export_photo_to_sidecar(photo, merge: merge)
   end
 
-  def self.export_photo_to_sidecar(photo)
-    # Load a sidecar file if one exists.  Otherwise, start with a
-    # minimal document that sets up the proper elements and namespaces.
+  def self.export_photo_to_sidecar(photo, merge: false)
+    # If we're merging and a sidecar file exists, load it.  Otherwise,
+    # start with a minimal document that sets up the proper elements
+    # and namespaces.
 
     xmp_filename = photo.filename + ".xmp"
+
     xmp =
-      begin
+      if merge && File.exist?(xmp_filename)
         Xmp.new(File.read(xmp_filename))
-      rescue Errno::ENOENT
+      else
         Xmp.new
       end
 

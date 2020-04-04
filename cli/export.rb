@@ -15,14 +15,18 @@ options = Optimist::options do
 Usage: #{$0} [options] file|directory...
 Export from database to .xmp sidecar files: sha1, tags, rating.
 
-If a sidecar file exists, information is added to it.
+Existing sidecar files can be overwritten, or data can be merged into it.
+Existing sidecar files are backed up as .xmp.0.
 
 If there is no database entry for a file, do nothing.
-Existing sidecar files are backed up as .xmp.0.
 EOS
   opt :recurse, "Recurse into directories"
+  # This should be called "merge" but that silently collides with the
+  # options Hash#merge method because Optimist uses method missing and
+  # #merge is not missing.
+  opt :add, "Add/Merge data into a possibly existing xmp file"
 end
 
 process_args(ARGV, options.recurse) do |filename|
-  Exporter.export_to_sidecar(filename)
+  Exporter.export_to_sidecar(filename, merge: options.add)
 end
