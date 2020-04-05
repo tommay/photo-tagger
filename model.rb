@@ -130,17 +130,9 @@ class Photo < Sequel::Model
   # This removes all related entries in the join table (photos_tags) when
   # the Tag is removed.  Don't need this with on_delete cascade.
   plugin :association_dependencies, tags: :nullify
-
-  # before_save is called before before_create.
-  # See https://github.com/jeremyevans/sequel/blob/master/doc/model_hooks.rdoc
-
-  def before_save
-    self.updated_at = Time.now
-  end
-
-  def before_create
-    self.created_at = self.updated_at
-  end
+  # Automatically maintain created_at and updated_at, and set updated_at
+  # on create.
+  plugin :timestamps, update_on_create: true
 
   def self.find_or_create(filename, &block)
     super(split_filename(filename)) do |photo|
