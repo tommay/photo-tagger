@@ -667,7 +667,7 @@ class Tagger
         end
       end
     info = [date_string, focal_length, focal_length_35mm, aperture, exposure,
-            photo.make, photo.camera_model].compact
+            photo.camera_make, photo.camera_model].compact
     if info.size > 0
       info.join(" ")
     end

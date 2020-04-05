@@ -55,8 +55,7 @@ module Model
       column :focal_length_35mm, Numeric, null: true
       column :aperture, Numeric, null: true
       column :exposure_time, Numeric, null: true
-      column :make, String, size: 100, null: true
-      # This can't be called just "model" since Photo.model is "Photo".
+      column :camera_make, String, size: 100, null: true
       column :camera_model, String, size: 100, null: true
       # XXX This would be better as :boolean instead of Integer.  But, it's
       # Integer for better or for worse, and the code needs to use 1 and 0
@@ -160,7 +159,7 @@ class Photo < Sequel::Model
           exif_data.get_real("Exif.Photo.FocalLengthIn35mmFilm")
         photo.aperture      ||= exif_data.get_real("Exif.Photo.FNumber")
         photo.exposure_time ||= exif_data.get_real("Exif.Photo.ExposureTime")
-        photo.make          ||= exif_data.get_string("Exif.Image.Make")
+        photo.camera_make   ||= exif_data.get_string("Exif.Image.Make")
         photo.camera_model  ||= exif_data.get_string("Exif.Image.Model")
       end
 
