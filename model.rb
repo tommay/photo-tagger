@@ -128,6 +128,10 @@ class Photo < Sequel::Model
   # Don't need this with on_delete cascade.
   plugin :association_dependencies, tags: :nullify
 
+  def before_create
+    self.created_at = Time.now
+  end
+
   def self.find_or_create(filename, &block)
     super(split_filename(filename)) do |photo|
       # Give the caller first chance to fill in values from xmp or
@@ -138,7 +142,6 @@ class Photo < Sequel::Model
       # Now set anything the caller didn't.
 
       photo.filedate ||= File.mtime(photo.filename)
-      photo.created_at ||= Time.now
 
       ExifData.new(photo.filename).tap do |exif_data|
         photo.taken_time    ||= exif_data.get_taken_time
@@ -318,9 +321,13 @@ class Tag < Sequel::Model
   # Don't need this with on_delete cascade.
   plugin :association_dependencies, photos: :nullify
 
+  def before_create
+    self.created_at = Time.now
+  end
+
   def self.ensure(tag)
     Tag.find_or_create(tag: tag) do |t|
-      t.created_at = Time.now
+      # created_at is now set in the before_create hook.
     end
   end
 end
