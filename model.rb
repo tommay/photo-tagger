@@ -127,7 +127,8 @@ Model.setup(db_file)
 class Photo < Sequel::Model
   many_to_many :tags
   one_to_many :phototags
-  # Don't need this with on_delete cascade.
+  # This removes all related entries in the join table (photos_tags) when
+  # the Tag is removed.  Don't need this with on_delete cascade.
   plugin :association_dependencies, tags: :nullify
 
   # before_save is called before before_create.
@@ -327,7 +328,8 @@ end
 class Tag < Sequel::Model
   many_to_many :photos
   one_to_many :phototags
-  # Don't need this with on_delete cascade.
+  # This removes all related entries in the join table (photos_tags) when
+  # the Tag is removed.  Don't need this with on_delete cascade.
   plugin :association_dependencies, photos: :nullify
 
   def before_create
