@@ -329,20 +329,16 @@ end
 class Tag < Sequel::Model
   many_to_many :photos
   one_to_many :phototags
+  plugin :timestamps
   # This removes all related entries in the join table (photos_tags) when
   # the Tag is removed.  Don't need this with on_delete cascade.
   plugin :association_dependencies, photos: :nullify
   # When a tag is destroyed or updated, update photo.updated_at.
   plugin :touch, associations: :photos
 
-  def before_create
-    self.created_at = Time.now
-    super
-  end
-
   def self.ensure(tag)
     Tag.find_or_create(tag: tag) do |t|
-      # created_at is now set in the before_create hook.
+      # created_at is now handled by plugin :timestamps.
     end
   end
 end
