@@ -10,6 +10,7 @@ require "byebug"
 #   Remove .deleted directories
 #   Remove empty directories
 #   Remove .bak files
+#   Remove .xmp.0 files
 #   tag purge -r <directory>
 
 options = Optimist::options do
@@ -19,6 +20,7 @@ Get rid of cruft in directories and database:
 - remove .deleted directories
 - remove empty directories
 - remove .bak files
+- remove .xmp.0 files
 - tag purge -r <directory> to remove database entries
   without a corresponding file
 EOS
@@ -29,7 +31,8 @@ def clean(directory)
     FileUtils.remove_dir(deleted)
   end
   %x{tag purge -r #{directory}}
-  %x{find "#{directory}" "(" -type d -empty -o -name "*.bak" ")" -delete}
+  %x{find "#{directory}" "(" -type d -empty \
+      -o -name "*.bak" -o -name "*.xmp.0" ")" -delete}
 end
 
 ARGV.each do |directory|
