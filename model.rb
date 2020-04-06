@@ -127,11 +127,14 @@ Model.setup(db_file)
 class Photo < Sequel::Model
   # When we add or remove a tag, update updated_at.  XXX I can't find a way
   # to have this done more automatically.
+  # XXX This really should be part of a transaction.  But since it isn't,
+  # update photo.updated_at first to ensure it's updated if a tag is
+  # added or removed.  If the add/remove doesn't happen, that's ok.
   many_to_many :tags,
-    after_add: (lambda do |photo, tag|
+    before_add: (lambda do |photo, tag|
       photo.touch
     end),
-    after_remove: (lambda do |photo, tag|
+    before_remove: (lambda do |photo, tag|
       photo.touch
     end)
   one_to_many :phototags
