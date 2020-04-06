@@ -125,7 +125,15 @@ db_file = ENV["TAGGER_DB"] || get_db.call(Dir.pwd)
 Model.setup(db_file)
 
 class Photo < Sequel::Model
-  many_to_many :tags
+  # When we add or remove a tag, update updated_at.  XXX I can't find a way
+  # to have this done more automatically.
+  many_to_many :tags,
+    after_add: (lambda do |photo, tag|
+      photo.touch
+    end),
+    after_remove: (lambda do |photo, tag|
+      photo.touch
+    end)
   one_to_many :phototags
   # This removes all related entries in the join table (photos_tags) when
   # the Tag is removed.  Don't need this with on_delete cascade.
@@ -133,6 +141,7 @@ class Photo < Sequel::Model
   # Automatically maintain created_at and updated_at, and set updated_at
   # on create.
   plugin :timestamps, update_on_create: true
+  plugin :touch    # Add Photo#touch method.
 
   def self.find_or_create(filename, &block)
     super(split_filename(filename)) do |photo|
@@ -323,9 +332,12 @@ class Tag < Sequel::Model
   # This removes all related entries in the join table (photos_tags) when
   # the Tag is removed.  Don't need this with on_delete cascade.
   plugin :association_dependencies, photos: :nullify
+  # When a tag is destroyed or updated, update photo.updated_at.
+  plugin :touch, associations: :photos
 
   def before_create
     self.created_at = Time.now
+    super
   end
 
   def self.ensure(tag)
@@ -342,6 +354,9 @@ end
 class Phototag < Sequel::Model(:photos_tags)
   many_to_one :tag
   many_to_one :photo
+  # When a phototag is destroyed or created/updated, update photo.updated_at.
+  # XXX doesn't work.  Had to add callbacks to the association in Photo.
+  # plugin :touch, associations: :photo
 end
 
 class Last < Sequel::Model
