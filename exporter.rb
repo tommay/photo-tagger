@@ -1,13 +1,21 @@
 require_relative "model"
 require_relative "xmp"
 
+require "byebug"
+
 module Exporter
-  def self.export_to_sidecar(filename, merge: false)
+  def self.export_to_sidecar(filename, merge: false, force: false)
     # Find a database entry if we have one.  If we don't, there is
     # nothing to export.
 
     photo = Photo.find(filename)
-    photo && export_photo_to_sidecar(photo, merge: merge)
+    if photo
+      xmp_filename = photo.filename + ".xmp"
+      if force || !File.exist?(xmp_filename) ||
+          photo.updated_at >= File.mtime(xmp_filename)
+        export_photo_to_sidecar(photo, merge: merge)
+      end
+    end
   end
 
   def self.export_photo_to_sidecar(photo, merge: false)
