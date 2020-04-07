@@ -98,29 +98,33 @@ module Model
   end
 end
 
-# Search up the directory tree from the current directory looking for
-# a .taggerdb file to tell us what sqlite file to use.  If no
-# .taggerdb is found, use tags,db in the current directory.  TAGGER_DB
-# in the environment overrides this.
-
-get_db = lambda do |dir|
-  file = File.join(dir, ".taggerdb")
-  if File.exist?(file)
-    File.expand_path(File.read(file).chomp)
+search_up_directory_tree = lambda do |dir, filename|
+  file = File.join(dir, filename)
+  case
+  when File.exist?(file)
+    file
+  when dir == "/"
+    nil
   else
-    if dir == "/"
-      dot_tagger = File.expand_path(File.join("~", ".tagger"))
-      if !File.directory?(dot_tagger)
-        Dir.mkdir(dot_tagger)
-      end
-      File.join(dot_tagger, "tags.db")
-    else
-      get_db.call(File.dirname(dir))
-    end
+    search_up_directory_tree.call(File.dirname(dir), filename)
   end
 end
 
-db_file = ENV["TAGGER_DB"] || get_db.call(Dir.pwd)
+db_file =
+  case
+  when db = ENV["TAGGER_DB"]
+    db
+  when db = search_up_directory_tree.call(Dir.pwd, "tags.db")
+    db
+  when taggerdb = search_up_directory_tree.call(Dir.pwd, ".taggerdb")
+    File.expand_path(File.read(taggerdb).chomp)
+  else
+    dot_tagger = File.expand_path(File.join("~", ".tagger"))
+    if !File.directory?(dot_tagger)
+      Dir.mkdir(dot_tagger)
+    end
+    File.join(dot_tagger, "tags.db")
+  end
 
 Model.setup(db_file)
 
