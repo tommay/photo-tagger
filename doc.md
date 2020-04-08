@@ -326,3 +326,9 @@ then
 
 `tag purge -f -v <directory>`
 
+## Deal with files that have been moved:
+
+Re-import them, copying the old tags and rating, and removing the old
+database entries:
+
+`tag import -r -c -p .`
