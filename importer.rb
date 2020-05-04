@@ -20,13 +20,11 @@ module Importer
       xmp_filename = "#{filename}.xmp"
       xmp = File.exist?(xmp_filename) && Xmp.new(File.read(xmp_filename))
 
-      # Fill in some things from xmp if we have them.  Only constant
-      # values from the photo are set here, no user-supplied values.
-      # Setting these from xmp saves some (a lot of) time.
+      # Fill in the sha1 from xmp if we have it.  This saves saves
+      # some (a lot of) time.
 
       if xmp
         photo.sha1 = xmp.get_sha1
-        photo.taken_time = xmp.get_taken_time
       end
 
       # Copy tags and rating from an existing xmp sidecar file.
