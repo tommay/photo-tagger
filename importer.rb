@@ -6,39 +6,41 @@ module Importer
         filename, copy_tags_and_rating: false,
         purge_identical_images: false,
         force_purge: false)
-    # Load an .xmp sidecar file is there is one.
-
-    xmp_filename = "#{filename}.xmp"
-    xmp = File.exist?(xmp_filename) && Xmp.new(File.read(xmp_filename))
-
     # Fetch or create a database entry.
 
     photo = Photo.find_or_create(filename) do |photo|
-      # This is a new photo.  Fill in some things from xmp if we have
-      # them.  Only constant values from the photo are set here, no
-      # user-supplied values.  Setting these from xmp saves some (a
-      # lot of) time.
+      # This is a new photo.
+
+      # Existing photos don't use the xmp file because of an issue
+      # where deleted tags would be re-added from the xmp file the
+      # next time the photo was loaded.
+
+      # Load an .xmp sidecar file is there is one.
+
+      xmp_filename = "#{filename}.xmp"
+      xmp = File.exist?(xmp_filename) && Xmp.new(File.read(xmp_filename))
+
+      # Fill in some things from xmp if we have them.  Only constant
+      # values from the photo are set here, no user-supplied values.
+      # Setting these from xmp saves some (a lot of) time.
+
       if xmp
         photo.sha1 = xmp.get_sha1
         photo.taken_time = xmp.get_taken_time
       end
-    end
 
-    # Always copy tags from an existing xmp sidecar file, even for an
-    # existing photo.  Rating is copied only if the photo is unrated.
-    # XXX This appends tags without replacing the existing tags.
+      # Copy tags and rating from an existing xmp sidecar file.
 
-    if xmp
-      xmp.get_tags.each do |tag|
-        photo.add_tag(tag)
-      end
-      if !photo.rating
+      if xmp
+        xmp.get_tags.each do |tag|
+          photo.add_tag(tag)
+        end
+
         rating = xmp.get_rating
         if rating
           photo.set_rating(rating)
         end
       end
-      photo.modified? && photo.save
     end
 
     # Cache identical photos so we load it at most once.
