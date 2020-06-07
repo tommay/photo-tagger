@@ -24,7 +24,7 @@ updated_at time is more recent than the file's modification time or
 
 Data can be merged into existing xmp files with -a/--add.
 
-Existing sidecar files are backed up as .xmp.0 if they are overwritten.
+Existing sidecar files are backed up as .xmp.bak if they would be overwritten.
 
 If there is no database entry for a file, do nothing.
 EOS

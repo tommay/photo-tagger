@@ -51,7 +51,7 @@ module Exporter
     # Make a backup of the original xmp and save the new one.
 
     begin
-      File.rename(xmp_filename, xmp_filename + ".0")
+      File.rename(xmp_filename, xmp_filename + ".bak")
     rescue Errno::ENOENT
     end
     File.write(xmp_filename, xmp.to_s)
