@@ -17,6 +17,7 @@ options = Optimist::options do
   opt :ugly, "Show files' tags in tag -a ... format"
   opt :directories, "List only directories containing the files"
   opt :expr, "Expression to search for", type: String
+  opt :wild, "Put wildcards around all search tags"
   conflicts :nul, :tags, :ugly
   conflicts :null, :tags, :ugly
   conflicts :directories, :tags, :ugly
@@ -222,7 +223,11 @@ expression = options.expr || ARGV.map do |arg|
   when /\+/
     arg
   else
-    "\"#{arg}\""
+    if !options.wild
+      "\"#{arg}\""
+    else
+      "\"%#{arg}%\""
+    end
   end
 end.join(" ")
 
