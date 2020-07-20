@@ -219,6 +219,8 @@ expression = options.expr || ARGV.map do |arg|
     "-\"#{$1}\""
   when /^r:[1-5]*$/
     arg
+  when /\+/
+    arg
   else
     "\"#{arg}\""
   end
