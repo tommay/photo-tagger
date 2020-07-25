@@ -11,14 +11,14 @@ require_relative "helpers"
 
 options = Optimist::options do
   banner "Usage: #{$0} [-]tag..."
-  opt :nul, "Nul-terminate output filenames"
-  opt :null, "Same as --nul"
+  # I would like --null's short option to be -0 ala xargs but optimist
+  # doesn't allow short options to be numbers for some reason.
+  opt :null, "Null-terminate output filenames", :short => "-n"
   opt :tags, "Show files' tags"
   opt :ugly, "Show files' tags in tag -a ... format"
   opt :directories, "List only directories containing the files"
   opt :expr, "Expression to search for", type: String
   opt :wild, "Put wildcards around all search tags"
-  conflicts :nul, :tags, :ugly
   conflicts :null, :tags, :ugly
   conflicts :directories, :tags, :ugly
   stop_on_unknown
@@ -42,7 +42,7 @@ options = Optimist::options do
   # Parentheses may be used to create complex expressions.
 end
 
-terminator = (options.nul || options.null) ? "\0" : "\n"
+terminator = options.null ? "\0" : "\n"
 
 @directories = {}
 
