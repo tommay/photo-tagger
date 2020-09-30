@@ -384,6 +384,7 @@ class Tagger
             filename = @photo.filename
                        .sub(%r{^.*/host/}, "c:/users/tom/")
                        .sub(%r{^/home/tom/D/}, "c:/users/tom/Desktop/")
+                       .sub(%r{^/home/tom/N/}, "n:/")
                        .gsub(%r{/}, "\\")
             c.set_text(filename)
             c.store
